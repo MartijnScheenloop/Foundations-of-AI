@@ -32,3 +32,4 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             time.sleep(0.2)
             self.propose_move(random.choice(all_moves))
 
+# test test
