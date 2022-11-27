@@ -7,6 +7,7 @@ import time
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
 
+#test
 
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     """
