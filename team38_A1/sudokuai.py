@@ -7,8 +7,6 @@ import time
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
 
-#test
-
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     """
     Sudoku AI that computes a move for a given sudoku configuration.
@@ -16,31 +14,25 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
     def __init__(self):
         super().__init__()
-
+    
     # N.B. This is a very naive implementation.
     def compute_best_move(self, game_state: GameState) -> None:
         N = game_state.board.N
 
-    def possible(i, j, value):
-        return game_state.board.get(i, j) == SudokuBoard.empty \
-            and not TabooMove(i, j, value) in game_state.taboo_moves
+        #We need to make a function that defines the children
+        def getChildren(board, maxiPlayer) -> None:
+            board = game_state.board
 
-        # all_moves = [Move(i, j, value) for i in range(N) for j in range(N)
-        #              for value in range(1, N+1) if possible(i, j, value)]
-        # move = random.choice(all_moves)
-        # self.propose_move(move)
+        #We need to make a function that keeps track of the scores
+        def diffScores(self)
 
-        # while True:
-        #     time.sleep(0.2)
-        #     self.propose_move(random.choice(all_moves))
-
-    def minimax_player(board, depth, maxiPlayer, score, alpha, beta):
-        if depth > board.squares.count(Sudokuboard.empty) or depth == 0 or board.squares.count(SudokuBoard.empty) == 0 or not getChildren(board, maxiPlayer):
-            return score, None
-                
+        def minimax_player(board, depth, maxiPlayer, score, alpha, beta):
+            if depth > board.squares.count(SudokuBoard.empty) or depth == 0 or board.squares.count(SudokuBoard.empty) == 0 or not getChildren(board, maxiPlayer):
+                return score, None
+                    
             #determining the step for the max_player
-        if maxiPlayer:
-            best_max_score = float('-inf')
+            if maxiPlayer:
+                best_max_score = float('-inf')
                 for pairs in getChildren(board, maxiPlayer):
                     score += pairs[1]
                     evaluation, _ = minimax_player(pairs[0], depth-1, False, score, alpha, beta)
@@ -52,7 +44,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                         break
                     score -= pairs[1]
                 return best_max_score, final_move
-            
+                
             #determining the step for the min_player
             else:
                 best_min_score = float('-inf')
@@ -66,6 +58,16 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     beta = min(beta, evaluation)
                     score -= pairs[1]
                 return best_min_score, final_move
+    
+        def possible(i, j, value):
+            return game_state.board.get(i, j) == SudokuBoard.empty \
+            and not TabooMove(i, j, value) in game_state.taboo_moves
+    
+        all_moves = [Move(i, j, value) for i in range(N) for j in range(N)
+                    for value in range(1, N+1) if possible(i, j, value)]
+        d=1
+        move = minimax_player(game_state.board, d, True, diffScores(), alpha, beta)
+        self.propose_move(move)
 
 
 
