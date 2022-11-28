@@ -68,7 +68,3 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         d=1
         move = minimax_player(game_state.board, d, True, diffScores(), alpha, beta)
         self.propose_move(move)
-
-
-
-        
