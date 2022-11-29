@@ -24,7 +24,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         # Determine if a certain move is non-taboo in a certain gamestate
         def non_taboo(i, j, value):
             return game_state.board.get(i, j) == SudokuBoard.empty \
-                   and not TabooMove(i, j, value) in game_state.taboo_moves
+                   and not Move(i, j, value) in game_state.taboo_moves
     
         # Create a list of the gamestate board's rows and a list of its columns (used in legal function)
         board_str = game_state.board.squares
@@ -42,38 +42,39 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             return not value in rows[i] and not value in columns[j]
    
         # Compute a list of all possible (non-taboo AND legal) moves for a certain gamestate
-        # possible_moves = [Move(i, j, value) for i in range(N) for j in range(N)
-        #                 for value in range(1, N+1) if legal(i, j, value)]
+        legal_moves = [Move(i, j, value) for i in range(N) for j in range(N)
+                        for value in range(1, N+1) if legal(i, j, value)]
 
-        possible_moves = []
         non_taboo_moves = []
-        legal_moves = []
+        possible_moves = []
         for i in range(N):
             for j in range(N):
                 for value in range(1, N+1):
                     if non_taboo(i, j, value):
                         non_taboo_moves.append(Move(i, j, value))
-                        # if legal(i, j, value):
-                        #     possible_moves.append(Move(i, j, value))
+                        if legal(i, j, value):
+                            possible_moves.append(Move(i, j, value))
 
-        for i in range(N):
-            for j in range(N):
-                for value in range(1, N+1):
-                    if legal(i, j, value):
-                        legal_moves.append(Move(i, j, value))
+        # legal_moves = []
+        # for i in range(N):
+        #     for j in range(N):
+        #         for value in range(1, N+1):
+        #             if legal(i, j, value):
+        #                 legal_moves.append(Move(i, j, value))
             
         # Create a list of the boards resulting from the possible moves
-        possible_boards = []
-        current_board = game_state.board
-        
-        possible_moves = np.intersect1d(non_taboo_moves, legal_moves)
+        # possible_boards = []
+        # current_board = game_state.board
 
-        print(possible_moves)
-        # for move in possible_moves:
-        #     print(move)
-        # print()
-        # for move in legal_moves:
-        #     print(move)
+        print('LEGAL MOVES:')
+        for move in legal_moves:
+            print(move)
+        print('NON-TABOO MOVES:')
+        for move in non_taboo_moves:
+            print(move)
+        print('POSSIBLE MOVES (LEGAL AND NON-TABOO):')
+        for move in possible_moves:
+            print(move)
         #     (i, j, value) = (move.i, move.j, move.value)
         #     current_board.put(i, j, value)
         #     board = current_board
