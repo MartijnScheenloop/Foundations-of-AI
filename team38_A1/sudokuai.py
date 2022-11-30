@@ -56,6 +56,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                         if legal(i, j, value, rows):
                             possible_moves.append(Move(i, j, value))
 
+        self.propose_move(random.choice(possible_moves))
+
         # Create copies of the current board's rows and columns, for use in the for loop below
         current_rows = deepcopy(rows)
         current_columns = deepcopy(columns)
