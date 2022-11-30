@@ -11,7 +11,7 @@ import competitive_sudoku.sudokuai
 # Check if numpy can be used!
 import numpy as np
 import math
-import math
+from copy import deepcopy
 
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     """
@@ -86,34 +86,48 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         # print('TABOO MOVES:')
         # for move in game_state.taboo_moves:
         #     print(move)
-        print('POSSIBLE MOVES (LEGAL AND NON-TABOO):')
-        current_board = game_state.board.squares
-        current_rows = []
-        for i in range(N):
-            current_rows.append(current_board[i*N : (i+1)*N])
-        print(current_rows)
+        print('POSSIBLE MOVES (LEGAL AND NON-TABOO): \n')
+
+        # current_board = game_state.board.squares
+        # current_rows = []
+        # for i in range(N):
+        #     current_rows.append(current_board[i*N : (i+1)*N])
+        print('Current rows:', rows)
+        print('Current columns:', columns)
+        # print(current_rows)
+        # print(current_columns)
+        current_rows = deepcopy(rows)
+        current_columns = deepcopy(columns)
 
         for move in possible_moves:
-            print('The move is ', move)
-            new_row = current_rows.copy()
-            new_row[move.i][move.j] = move.value
-            new_column = np.transpose(new_row)
-            print('The board would then look like: ', new_row)
+            print("Current row:   ", current_rows[move.i])
+            print("Current column:", current_columns[move.j])
+            current_row_complete = not 0 in current_rows[move.i]
+            current_column_complete = not 0 in current_columns[move.j]
 
-            row_complete = not 0 in new_row[move.i]
-            column_complete = not 0 in new_column[move.j]
+            print('The move is:', move)
+            new_rows = deepcopy(current_rows)
+            new_rows[move.i][move.j] = move.value
+            new_columns = np.transpose(new_rows)
+
+            print("New row:       ", new_rows[move.i])
+            print("New column:    ", new_columns[move.j])
+            new_row_complete = not 0 in new_rows[move.i]
+            new_column_complete = not 0 in new_columns[move.j]
+            
             count = 0
-            if row_complete:
+            if new_row_complete and not current_row_complete:
                 count += 1
-            if column_complete: 
+            if new_column_complete and not current_column_complete: 
                 count += 1
-            # if #square_complete:
+            # if section_complete:
             #     count +=1
-            if row_complete and column_complete:
-                count += 1
-            # if row_complete and column_complete and #square_complete:
-            #     count += 3
-            print('Final count is ', count)
+            # print('Final count is:', count, '\n')
+            print('Current row complete:   ', current_row_complete)
+            print('Current column complete:', current_column_complete)
+            print('New row complete:       ', new_row_complete)
+            print('New column complete:    ', new_column_complete, '\n')
+            print('Count:', count)
 
 
         # print('CURRENT SCORE')
