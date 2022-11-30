@@ -11,6 +11,7 @@ import competitive_sudoku.sudokuai
 # Check if numpy can be used!
 import numpy as np
 import math
+import math
 
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     """
@@ -56,6 +57,9 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                             possible_moves.append(Move(i, j, value))
         
         #Getting the output 
+        current_board = game_state.board
+        x = print(current_board)
+
         for i in range(N):
             for j in range(N):
                 for value in range(1, N+1):
@@ -64,8 +68,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                         if legal(i, j, value, rows):
                             game_state.board.put(i,j,value)
                             board_str = game_state.board
-                            print(board_str)                                
-
+                            print(board_str)
 
         # print('NON-TABOO MOVES:')
         # for move in non_taboo_moves:
