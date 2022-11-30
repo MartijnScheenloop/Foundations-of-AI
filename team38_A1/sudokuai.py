@@ -7,8 +7,7 @@ import time
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove, print_board
 import competitive_sudoku.sudokuai
 
-
-# Check if numpy can be used!
+# Extra packages:
 import numpy as np
 import math
 from copy import deepcopy
@@ -57,13 +56,16 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                         if legal(i, j, value, rows):
                             possible_moves.append(Move(i, j, value))
 
+        # Create copies of the current board's rows and columns, for use in the for loop below
         current_rows = deepcopy(rows)
         current_columns = deepcopy(columns)
-        best_move = Move(0, 0, 0)
         best_count = 0
 
         # Select the move that leads to the maximal score
         for move in possible_moves:
+
+            # Check if a row, column, or both are completed by a certain move
+            # and if so: add 1 to the counter
             current_row_complete = not 0 in current_rows[move.i]
             current_column_complete = not 0 in current_columns[move.j]
 
@@ -80,6 +82,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             if new_column_complete and not current_column_complete: 
                 count += 1
 
+            # Check if a section is completed, and if so add 1 to the counter
             size_row = math.floor(np.sqrt(len(current_rows)))
             size_col = math.ceil(np.sqrt(len(current_rows)))
             row = math.floor(move.i/size_row)
@@ -90,6 +93,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             if current_section.count(0) == 1:
                 count += 1
 
+            # Select the move with the highest count, which results in the highest score
             if count > best_count:
                 best_count = count
                 self.propose_move(move)
