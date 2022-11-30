@@ -55,8 +55,11 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                             possible_moves.append(Move(i, j, value))
                             
 
-        print('NON-TABOO MOVES:')
-        for move in non_taboo_moves:
+        # print('NON-TABOO MOVES:')
+        # for move in non_taboo_moves:
+        #     print(move)        
+        print('TABOO MOVES:')
+        for move in game_state.taboo_moves:
             print(move)
         print('POSSIBLE MOVES (LEGAL AND NON-TABOO):')
         for move in possible_moves:
