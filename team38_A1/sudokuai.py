@@ -39,11 +39,12 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
         # Determine if action is legal (not already present in section, row or column)
         def legal(i,j,value,data):
-            size = int(np.sqrt(len(rows)))
-            row = math.floor(i / size)
-            col = math.floor(j/size)
+            size_row = math.floor(np.sqrt(len(data)))
+            size_col = math.ceil(np.sqrt(len(data)))
+            row = math.floor(i/size_row)
+            col = math.floor(j/size_col)
             y= np.vstack([xi for xi in data])
-            return not value in np.array(y[row*size:row*size+size,col*size:col*size+size]).reshape(-1,).tolist() and not value in rows[i] and not value in columns[j]
+            return not value in np.array(y[row*size_row:row*size_row+size_row,col*size_col:col*size_col+size_col]).reshape(-1,).tolist() and not value in rows[i] and not value in columns[j]
    
         non_taboo_moves = []
         possible_moves = []
