@@ -56,35 +56,71 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                         if legal(i, j, value, rows):
                             possible_moves.append(Move(i, j, value))
         
-        #Getting the output 
-        current_board = game_state.board
-        x = print(current_board)
+        # #Getting the output 
+        # current_board = game_state.board
+        # x = print(current_board)
 
-        for i in range(N):
-            for j in range(N):
-                for value in range(1, N+1):
-                    if non_taboo(i, j, value):
-                        non_taboo_moves.append(Move(i, j, value))
-                        if legal(i, j, value, rows):
-                            game_state.board.put(i,j,value)
-                            board_str = game_state.board
-                            print(board_str)
+        # for i in range(N):
+        #     for j in range(N):
+        #         for value in range(1, N+1):
+        #             if non_taboo(i, j, value):
+        #                 non_taboo_moves.append(Move(i, j, value))
+        #                 if legal(i, j, value, rows):
+
+        #                     # game_state.board.put(i,j,value)
+        #                     # current_row = rows
+
+        #                     # new_state = game_state.board.squares
+        #                     # new_rows = []
+        #                     # for i in range(N):
+        #                     #     new_rows.append(new_state[i*N : (i+1)*N])
+        #                     # print(current_row, new_rows)
+
+        #                     # new_row_empty = 0 in new_rows[i]
+        #                     # print(new_row_empty)
 
         # print('NON-TABOO MOVES:')
         # for move in non_taboo_moves:
         #     print(move)        
-        print('TABOO MOVES:')
-        for move in game_state.taboo_moves:
-            print(move)
+        # print('TABOO MOVES:')
+        # for move in game_state.taboo_moves:
+        #     print(move)
         print('POSSIBLE MOVES (LEGAL AND NON-TABOO):')
+        current_board = game_state.board.squares
+        current_rows = []
+        for i in range(N):
+            current_rows.append(current_board[i*N : (i+1)*N])
+        print(current_rows)
+
         for move in possible_moves:
-            print(move)
-        print('CURRENT SCORE')
-        for move in game_state.scores:
-            print(move)
-        print('historic moves')
-        for move in game_state.moves:
-            print(move)
+            print('The move is ', move)
+            new_row = current_rows.copy()
+            new_row[move.i][move.j] = move.value
+            new_column = np.transpose(new_row)
+            print('The board would then look like: ', new_row)
+
+            row_complete = not 0 in new_row[move.i]
+            column_complete = not 0 in new_column[move.j]
+            count = 0
+            if row_complete:
+                count += 1
+            if column_complete: 
+                count += 1
+            # if #square_complete:
+            #     count +=1
+            if row_complete and column_complete:
+                count += 1
+            # if row_complete and column_complete and #square_complete:
+            #     count += 3
+            print('Final count is ', count)
+
+
+        # print('CURRENT SCORE')
+        # for move in game_state.scores:
+        #     print(move)
+        # print('historic moves')
+        # for move in game_state.moves:
+        #     print(move)
 
         move = random.choice(possible_moves)
         self.propose_move(move)
