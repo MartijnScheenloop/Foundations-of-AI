@@ -19,6 +19,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     def __init__(self):
         super().__init__()
 
+<<<<<<< HEAD
     def greedy_move(self, game_state: GameState) -> None:
         """
         ...
@@ -29,6 +30,13 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             """
             Determine if a certain move is non-taboo in a certain gamestate
             """
+=======
+    def compute_best_move(self, game_state: GameState) -> None:
+        N = game_state.board.N
+
+        # Determine if a certain move is non-taboo in a certain gamestate
+        def non_taboo(i, j, value):
+>>>>>>> 24fa2958ca7316f59446964430256dcd37a72a06
             return game_state.board.get(i, j) == SudokuBoard.empty \
                    and not Move(i, j, value) in game_state.taboo_moves
     
@@ -41,10 +49,15 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         
         columns = np.transpose(rows)
 
+<<<<<<< HEAD
         def legal(i,j,value,data):
             """
             Determine if action is legal (not already present in section, row or column)
             """
+=======
+        # Determine if action is legal (not already present in section, row or column)
+        def legal(i,j,value,data):
+>>>>>>> 24fa2958ca7316f59446964430256dcd37a72a06
             size_row = math.floor(np.sqrt(len(data)))
             size_col = math.ceil(np.sqrt(len(data)))
             row = math.floor(i/size_row)
@@ -105,6 +118,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             # Select the move with the highest count, which results in the highest score
             if count > best_count:
                 best_count = count
+<<<<<<< HEAD
                 self.propose_move(move)
 
     def minimax_move(self, game_state: GameState, depth: int, maxPlayer: bool) -> None:
@@ -118,3 +132,6 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         else:
             
             
+=======
+                self.propose_move(move)
+>>>>>>> 24fa2958ca7316f59446964430256dcd37a72a06
