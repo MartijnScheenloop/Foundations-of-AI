@@ -38,10 +38,24 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
         # Determine if action is legal (not already present in section, row or column)
         def legal(i,j,value,data):
-            size_row = math.floor(np.sqrt(len(data)))
-            size_col = math.ceil(np.sqrt(len(data)))
-            row = math.floor(i/size_row)
-            col = math.floor(j/size_col)
+            
+            root_row = np.sqrt(len(data))
+            size_row = int(root_row // 1)
+            
+            root_col = np.sqrt(len(data))
+            size_col = int(-1 * root_col // 1 * -1)
+         
+            prep_row = move.i/size_row
+            row = int(prep_row // 1)
+
+            prep_col = move.j/size_col
+            col = int(prep_col // 1)
+
+            # size_row = math.floor(np.sqrt(len(data)))
+            # size_col = math.ceil(np.sqrt(len(data)))
+            # row = math.floor(i/size_row)
+            # col = math.floor(j/size_col)
+
             y= np.vstack([xi for xi in data])
             return not value in np.array(y[row*size_row:row*size_row+size_row,col*size_col \
                 :col*size_col+size_col]).reshape(-1,).tolist() and not value in rows[i] and not value in columns[j]
@@ -85,17 +99,27 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 count += 1
 
             # Check if a section is completed, and if so add 1 to the counter
-            size_row = math.floor(np.sqrt(len(current_rows)))
-            size_col = math.ceil(np.sqrt(len(current_rows)))
-            row = math.floor(move.i/size_row)
-            col = math.floor(move.j/size_col) 
+            root_row = np.sqrt(len(current_rows))
+            size_row = int(root_row // 1)
+            # size_row_old = math.floor(np.sqrt(len(current_rows)))
+            # print("size row", size_row, size_row_old)
+
+            root_col = np.sqrt(len(current_rows))
+            size_col = int(-1 * root_col // 1 * -1)
+            # size_col_old = math.ceil(np.sqrt(len(current_rows)))
+            # print("size col", size_col, size_col_old)
+
+            prep_row = move.i/size_row
+            row = int(prep_row // 1)
+            # row_old = math.floor(move.i/size_row)
+            # print("size row", row, row_old)
+
+            prep_col = move.j/size_col
+            col = int(prep_col // 1)
+            # col_old = math.floor(move.j/size_col) 
+            # print("size row", col, col_old)
+
             y= np.vstack([xi for xi in current_rows])           
             current_section = np.array(y[row*size_row:row*size_row+size_row,col*size_col:col*size_col+size_col]).reshape(-1,).tolist()
                     
             if current_section.count(0) == 1:
-                count += 1
-
-            # Select the move with the highest count, which results in the highest score
-            if count > best_count:
-                best_count = count
-                self.propose_move(move)
