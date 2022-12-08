@@ -126,60 +126,98 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     def __init__(self):
         super().__init__()
 
+    ## This code below assigns a greedy move:
+
+    # def compute_best_move(self, game_state: GameState) -> None:
+    #     """
+    #     ...
+    #     """
+    #     moves = compute_possible_moves(game_state)
+    #     possible_moves = moves[0]
+    #     possible_moves_scores = moves[1]
+
+    #     # Select a random possible move
+    #     self.propose_move(random.choice(possible_moves))
+
+    #     # Select the move with the highest count, which results in the highest score
+    #     best_count = 0
+    #     for move in possible_moves_scores:
+    #         count = move[1]
+    #         if count > best_count:
+    #             best_count = count
+    #             self.propose_move(move[0])
+            
+
+    # def minimax(self, game_state: GameState, depth: int, maxPlayer: bool) -> None:
+    #     """
+    #     ...
+    #     """
+    #     possible_moves_scores = compute_possible_moves(game_state)
+
+    #     # if depth == 0:
+    #     #     print("Game Over")
+
+    #     if maxPlayer:
+    #         bestCount = 3
+    #         proposed_move = None
+    #         for move in possible_moves_scores:
+    #             count = move[1]
+    #             if count >= bestCount:
+    #                 proposed_move = move
+        
+    #     else:
+    #         bestCount = 3
+    #         proposed_move = None
+    #         for move in possible_moves_scores:
+    #             count = move[1]
+    #             if count <= bestCount:
+    #                 proposed_move = move
+
+        # return proposed_move
+
     def compute_best_move(self, game_state: GameState) -> None:
         """
         ...
         """
-        moves = compute_possible_moves(game_state)
-        possible_moves = moves[0]
-        possible_moves_scores = moves[1]
+        current_game_state = deepcopy(game_state)
+        possible_moves_scores = compute_possible_moves(current_game_state)
+        possible_moves_scores = possible_moves_scores[1]
 
-        # Select a random possible move
-        self.propose_move(random.choice(possible_moves))
-
-        # Select the move with the highest count, which results in the highest score
-        best_count = 0
-        for move in possible_moves_scores:
-            count = move[1]
-            if count > best_count:
-                best_count = count
-                self.propose_move(move[0])
-            
-
-    def minimax(self, game_state: GameState, depth: int, maxPlayer: bool) -> None:
-        """
-        ...
-        """
-        possible_moves_scores = compute_possible_moves(game_state)
+        # Select first possible move
+        self.propose_move(possible_moves_scores[0][0])
 
         # if depth == 0:
         #     print("Game Over")
 
-        if maxPlayer:
-            bestCount = 3
-            proposed_move = None
-            for move in possible_moves_scores:
-                count = move[1]
-                if count >= bestCount:
-                    proposed_move = move[0]
-        
-        else:
-            bestCount = 0
-            proposed_move = None
-            for move in possible_moves_scores:
-                count = move[1]
-                if count <= bestCount:
-                    proposed_move = move[0]
+        best_count = 0
+        d = 0
+        for move in possible_moves_scores:
+            print('\nPLAYER 1 MOVE:', move[0])
+            # count = move[1]
+            # if count > best_count:
+            #     best_count = count
+            #     proposed_move = move[0]
+            
+            new_game_state = deepcopy(current_game_state)
+            new_game_state.board.put(move[0].i, move[0].j, move[0].value)
 
-        return proposed_move
+            # Compute possible moves for opponent based on new board
+            opp_possible_moves_scores = compute_possible_moves(new_game_state)
+            opp_possible_moves_scores = opp_possible_moves_scores[1]
 
-    def minimax_best_move(self, game_state: GameState, depth: int, maxPlayer: bool) -> None:
-        """
-        ...
-        """
-        possible_moves_scores = compute_possible_moves(game_state)
+            for x in opp_possible_moves_scores:
+                print('Player 2 possible move:', f'({x[0].i},{x[0].j}) -> {x[0].value}')
 
-        if depth == 0:
-            print("Game Over")
-
+            # opp_possible_moves_scores_min = []
+            # for opp_move in opp_possible_moves_scores:
+            #     if opp_move[1] == 0:
+            #         opp_possible_moves_scores_min.append((opp_move[0], 3))
+            #     elif opp_move[1] == 1:
+            #         opp_possible_moves_scores_min.append((opp_move[0], 2))
+            #     elif opp_move[1] == 2:
+            #         opp_possible_moves_scores_min.append((opp_move[0], 1))
+            #     elif opp_move[1] == 3:
+            #         opp_possible_moves_scores_min.append((opp_move[0], 0))
+            
+            # print(opp_possible_moves_scores_min)
     
