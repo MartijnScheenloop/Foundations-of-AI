@@ -146,11 +146,14 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 self.propose_move(move[0])
             
 
-    def minimax_move(self, game_state: GameState, depth: int, maxPlayer: bool) -> None:
+    def minimax(self, game_state: GameState, depth: int, maxPlayer: bool) -> None:
         """
         ...
         """
         possible_moves_scores = compute_possible_moves(game_state)
+
+        # if depth == 0:
+        #     print("Game Over")
 
         if maxPlayer:
             bestCount = 3
@@ -167,3 +170,16 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 count = move[1]
                 if count <= bestCount:
                     proposed_move = move[0]
+
+        return proposed_move
+
+    def minimax_best_move(self, game_state: GameState, depth: int, maxPlayer: bool) -> None:
+        """
+        ...
+        """
+        possible_moves_scores = compute_possible_moves(game_state)
+
+        if depth == 0:
+            print("Game Over")
+
+    
