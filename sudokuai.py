@@ -70,6 +70,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         current_columns = deepcopy(columns)
         best_count = 0
 
+        possible_moves_scores: list[tuple[Move,int]] = []
+
         # Select the move that leads to the maximal score
         for move in possible_moves:
 
@@ -106,6 +108,10 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             if count > best_count:
                 best_count = count
                 self.propose_move(move)
+
+            # Create a list containing tuples of moves and their score counts
+            possible_moves_scores.append((move, count))
+            
 
     def minimax_move(self, game_state: GameState, depth: int, maxPlayer: bool) -> None:
         """
