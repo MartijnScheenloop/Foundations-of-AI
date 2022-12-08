@@ -123,3 +123,9 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             current_section = np.array(y[row*size_row:row*size_row+size_row,col*size_col:col*size_col+size_col]).reshape(-1,).tolist()
                     
             if current_section.count(0) == 1:
+                count += 1
+
+            # Select the move with the highest count, which results in the highest score
+            if count > best_count:
+                best_count = count
+                self.propose_move(move)
