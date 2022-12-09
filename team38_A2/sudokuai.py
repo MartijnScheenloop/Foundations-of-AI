@@ -115,8 +115,15 @@ def compute_possible_moves(game_state):
             count += 1
 
         # Create a list containing tuples of moves and their score counts
-        possible_moves_scores.append((move, count))
-        
+        if count == 0:
+            possible_moves_scores.append((move, 0))
+        if count == 1:
+            possible_moves_scores.append((move, 1))
+        if count == 2:
+            possible_moves_scores.append((move, 3))
+        if count == 3:
+            possible_moves_scores.append((move, 7))
+
     return [possible_moves, possible_moves_scores]
 
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
@@ -135,6 +142,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     #     moves = compute_possible_moves(game_state)
     #     possible_moves = moves[0]
     #     possible_moves_scores = moves[1]
+    #     print(possible_moves_scores)
 
     #     # Select a random possible move
     #     self.propose_move(random.choice(possible_moves))
@@ -191,8 +199,9 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
         best_count = 0
         d = 0
+        possible_moves_new_scores = []
         for move in possible_moves_scores:
-            print('\nPLAYER 1 MOVE:', move[0])
+            print('\nPLAYER 1 MOVE:', move[0], 'Score:', move[1])
             # count = move[1]
             # if count > best_count:
             #     best_count = count
@@ -205,19 +214,24 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             opp_possible_moves_scores = compute_possible_moves(new_game_state)
             opp_possible_moves_scores = opp_possible_moves_scores[1]
 
-            for x in opp_possible_moves_scores:
-                print('Player 2 possible move:', f'({x[0].i},{x[0].j}) -> {x[0].value}')
-
-            # opp_possible_moves_scores_min = []
-            # for opp_move in opp_possible_moves_scores:
-            #     if opp_move[1] == 0:
-            #         opp_possible_moves_scores_min.append((opp_move[0], 3))
-            #     elif opp_move[1] == 1:
-            #         opp_possible_moves_scores_min.append((opp_move[0], 2))
-            #     elif opp_move[1] == 2:
-            #         opp_possible_moves_scores_min.append((opp_move[0], 1))
-            #     elif opp_move[1] == 3:
-            #         opp_possible_moves_scores_min.append((opp_move[0], 0))
+            max_opp_score = 0
+            for opp_move in opp_possible_moves_scores:
+                print('Player 2 possible move:', f'({opp_move[0].i},{opp_move[0].j}) -> {opp_move[0].value}', 'Score:', opp_move[1])
+                if opp_move[1] > max_opp_score:
+                    max_opp_score = opp_move[1]
             
-            # print(opp_possible_moves_scores_min)
-    
+            move = list(move)
+            move[1] = move[1] - max_opp_score
+            possible_moves_new_scores.append(tuple(move))
+            print('New score:', move[1])
+        
+        # print(f'\n{possible_moves_new_scores}')
+
+        # Select the move with the highest count, which results in the highest score
+        best_score = -math.inf
+        for move in possible_moves_new_scores:
+            score = move[1]
+            if score > best_score:
+                best_score = score
+                self.propose_move(move[0])
+        print('\nBest new score:', best_score)
