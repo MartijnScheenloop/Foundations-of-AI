@@ -59,14 +59,9 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 """
                 Checks for a given move if it is correct in the row, column and region.
                 """
-
                 #Determining the sizes of the regions 
-                root_row_region = np.sqrt(len(rows))
-                size_row_region = int(root_row_region // 1)
-
-                root_col_region = np.sqrt(len(rows))
-                size_col_region = int(-1 * root_col_region // 1 * -1)  
-                
+                size_row_region = state.board(n)
+                size_col_region = state.board(m)
                 prep_row_region = i/size_row_region
                 row_region = int(prep_row_region // 1)
                 prep_col_region = j/size_col_region
@@ -102,32 +97,54 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             def colFill(i,j):
                 """Checks if the column is completed.
                 """
-                for a in range(N):
-                    if state.board.get(a, j) == SudokuBoard.empty and a!=i:
+                for element_col in range(state.board.m):
+                    if state.board.get(element_col, j) == SudokuBoard.empty and element_col!=i:
                         return False
                 return True
             
             def rowFill(i,j):
                 """Checks if the row is completed.
                 """
-
-                for b in range(N):
-                    if state.board.get(i, b) == SudokuBoard.empty and b!=j:
+                for element_row in range(state.board.n):
+                    if state.board.get(i, element_row) == SudokuBoard.empty and element_row!=j:
                         return False
                 return True
             
             def regionFill(i,j):
                 """Checks if the region is completed.
                 """
-                x = i - (i % state.board.m)
-                y = j - (j % state.board.n)
+                # x = i - (i % state.board.m)
+                # y = j - (j % state.board.n)
 
-                for a in range(state.board.m):
-                    for b in range(state.board.n):
-                        if state.board.get(x+a, y+b) == SudokuBoard.empty and \
-                            (x+a !=i or y+b !=j):
-                            return False
-                return True
+                # for a in range(state.board.m):
+                #     for b in range(state.board.n):
+                #         if state.board.get(x+a, y+b) == SudokuBoard.empty and \
+                #             (x+a !=i or y+b !=j):
+                #             return False
+                # return True
+
+                #Determining the sizes of the regions 
+                # niet efficient!
+                board_str = game_state.board.squares
+                rows = []
+                N = game_state.board.N
+                for i in range(N):
+                    rows.append(board_str[i*N : (i+1)*N])
+                
+                size_row_region = state.board.n
+                size_col_region = state.board.m
+                prep_row_region = i/size_row_region
+                row_region = int(prep_row_region // 1)
+                prep_col_region = j/size_col_region
+                col_region = int(prep_col_region // 1)
+                y = np.vstack([xi for xi in rows])
+                region = np.array(y[row_region*size_row_region:row_region*size_row_region+size_row_region,\
+                    col_region*size_col_region:col_region*size_col_region+size_col_region]).reshape(-1,).tolist()
+
+                if region.count(0) == 1:
+                    return True
+
+                return False
 
             partsFilled = colFill(move.i, move.j) + rowFill(move.i, move.j) + regionFill(move.i, move.j)
             
