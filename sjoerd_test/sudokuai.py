@@ -60,8 +60,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 Checks for a given move if it is correct in the row, column and region.
                 """
                 #Determining the sizes of the regions 
-                size_row_region = state.board(n)
-                size_col_region = state.board(m)
+                size_row_region = state.board.n
+                size_col_region = state.board.m
                 prep_row_region = i/size_row_region
                 row_region = int(prep_row_region // 1)
                 prep_col_region = j/size_col_region
