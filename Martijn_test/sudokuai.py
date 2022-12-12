@@ -19,7 +19,6 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
     def compute_best_move(self, game_state: GameState) -> None:
         N = game_state.board.N
-        print(N)
 
         def emptyList(board):
             """
@@ -32,6 +31,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 i,j = SudokuBoard.f2rc(board, a)
                 if board.get(i,j) == SudokuBoard.empty:
                     empty_list.append([i,j])
+            print(empty_list)
             return empty_list           
         
         def extractPossibleMoves(state):
@@ -47,8 +47,6 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                         if state.board.get(element_col, j) == value:
                             return False
                     return True
-
-                
 
                 def checkRow(i,j,value):
                     for element_row in range(N):
