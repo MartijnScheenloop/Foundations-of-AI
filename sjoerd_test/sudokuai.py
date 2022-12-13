@@ -168,6 +168,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     alpha = max(alpha, eval)
                     if beta <= alpha:
                         break
+                    score -= pairs[1]
                 return maxEval, end_move
             
             else:
@@ -180,6 +181,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                         end_move = pairs[2]
                     minEval = min(minEval, eval)
                     beta = min(beta, eval)
+                    if beta <= alpha:
+                        break
                     score -= pairs[1]
                 return minEval, end_move
             
