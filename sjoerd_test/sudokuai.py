@@ -136,11 +136,11 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
             pairs = []
             child_board = deepcopy(state)
-            print("hier jonge kut", child_board)
+            print("beginstate", child_board)
             for move in extractPossibleMoves(state):
                 child_board.board.put(move.i, move.j, move.value)
                 new_score = scoreFunction(move, state)
-                print(move, "hier nog inne keer", child_board, new_score)
+                print(move, "state na move", child_board, new_score)
                 list = child_board, new_score, move
                 pairs.append(list)
             return pairs
@@ -177,7 +177,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     eval, _ = minimax(pairs[0], depth-1, True, score, alpha, beta)
                     if minEval > eval:
                         minEval = eval
-                        the_move = pairs[2]
+                        end_move = pairs[2]
                     minEval = min(minEval, eval)
                     beta = min(beta, eval)
                     score -= pairs[1]
