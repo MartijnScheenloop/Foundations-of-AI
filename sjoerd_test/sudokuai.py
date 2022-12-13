@@ -144,16 +144,16 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
         # self.propose_move(random.choice(extractPossibleMoves(game_state)))
 
-        def getChildren(game_state):
+        def getChildren(state):
             """Returns for each move the new board, score and the move itself.
                 @param state: 
                 """
 
             pairs = []
-            for move in extractPossibleMoves(game_state):
-                child_board = deepcopy(game_state.board)
-                child_board.put(move.i, move.j, move.value)
-                new_score = scoreFunction(move, game_state)
+            for move in extractPossibleMoves(state):
+                child_board = deepcopy(state)
+                child_board.board.put(move.i, move.j, move.value)
+                new_score = scoreFunction(move, state)
                 list = child_board, new_score, move
                 pairs.append(list)
             return pairs
