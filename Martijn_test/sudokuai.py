@@ -110,13 +110,13 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             partsFilled = colFill(move.i, move.j) + rowFill(move.i, move.j) + regionFill(move.i, move.j)
             
             if partsFilled == 0:
-                return 0
-            if partsFilled == 1:
-                return 1
-            if partsFilled == 2:
-                return 3
-            if partsFilled == 3:
-                return 7
+                return int(0)
+            elif partsFilled == 1:
+                return int(1)
+            elif partsFilled == 2:
+                return int(3)
+            elif partsFilled == 3:
+                return int(7)
 
         def evaluate(state):
             """Evaluates the best move for the given state.
