@@ -34,7 +34,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     empty_list.append([i,j])
             return empty_list  
 
-        print(emptyList(game_state.board))         
+        # print(emptyList(game_state.board))         
                
         def extractPossibleMoves(game_state: GameState):
             """
@@ -77,9 +77,6 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
 
             return [Move(a[0], a[1], value) for a in emptyList(game_state) for value in range(1, N+1) if possible(a[0], a[1], value)]         
-            
-        for move in extractPossibleMoves(game_state):
-            print(move)
 
         def scoreFunction(move, game_state):
             """
@@ -158,7 +155,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 pairs.append(list)
             return pairs
         
-        print(getChildren(game_state))
+        # print(getChildren(game_state))
         
         def minimax(game_state, depth: int, isMaximisingPlayer: bool, score: int, alpha: float, beta: float):
             """Creates a tree with a given depth and returns a move.
@@ -182,7 +179,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     if beta <= alpha:
                         break
                     score -= pairs[1]
-                # print("maxEval: ", maxEval, "end_move: ", end_move)
+                print("maxEval: ", maxEval, "end_move: ", end_move)
                 return maxEval, end_move
             
             else:
@@ -198,9 +195,10 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     if beta <= alpha:
                         break
                     score -= pairs[1]
-                # print("minEval: ", minEval, "end_move: ", end_move)
+                print("minEval: ", minEval, "end_move: ", end_move)
                 return minEval, end_move
             
-        for d in range(1, game_state.board.squares.count(SudokuBoard.empty)+1):
+        for d in range(0, game_state.board.squares.count(SudokuBoard.empty)):
+            print("iteration", d)
             _, do_move = minimax(game_state, d, True, 0, float("-inf"), float("inf"))
             self.propose_move(do_move)
