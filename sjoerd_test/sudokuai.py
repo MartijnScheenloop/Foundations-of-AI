@@ -20,12 +20,13 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     def compute_best_move(self, game_state: GameState) -> None:
         N = game_state.board.N
 
-        def emptyList(board):
+        def emptyList(game_state: GameState):
             """
             Returns a list with all the empty squares
                 @param board: the board with N**2 entries.
             """
 
+            board = game_state.board
             empty_list = []
             for a in range(N**2):
                 i,j = SudokuBoard.f2rc(board, a)
@@ -33,9 +34,9 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     empty_list.append([i,j])
             return empty_list  
 
-        print(emptyList(game_state.board))         
+        # print(emptyList(game_state))         
                
-        def extractPossibleMoves(state):
+        def extractPossibleMoves(game_state):
             """
             Returns the possible moves for a certain game state.
             @param state: the current game state in a SudokuBoard object
@@ -47,7 +48,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     """Checks if the region is completed.
                     """
                     for element_col in range(N):
-                        if state.board.get(element_col, j) == value:
+                        if game_state.board.get(element_col, j) == value:
                             return False
                     return True
 
@@ -55,32 +56,32 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     """Checks if the row is completed.
                     """
                     for element_row in range(N):
-                        if state.board.get(i, element_row) == value:
+                        if game_state.board.get(i, element_row) == value:
                             return False
                     return True
             
                 def checkRegion(i,j,value):
                     """Checks if the region is completed.
                     """
-                    x = i - (i % state.board.m)
-                    y = j - (j % state.board.n)
+                    x = i - (i % game_state.board.m)
+                    y = j - (j % game_state.board.n)
 
-                    for element_col in range(state.board.m):
-                        for element_row in range(state.board.n):
-                            if state.board.get(x+element_col, y+element_row) == value:
+                    for element_col in range(game_state.board.m):
+                        for element_row in range(game_state.board.n):
+                            if game_state.board.get(x+element_col, y+element_row) == value:
                                 return False
                     return True
 
-                return not TabooMove(i,j,value) in state.taboo_moves \
+                return not TabooMove(i,j,value) in game_state.taboo_moves \
                         and checkColumn(i,j,value) and checkRow(i,j,value) and checkRegion(i,j,value)
 
 
-            return [Move(a[0], a[1], value) for a in emptyList(state.board) for value in range(1, N+1) if possible(a[0], a[1], value)]         
+            return [Move(a[0], a[1], value) for a in emptyList(game_state) for value in range(1, N+1) if possible(a[0], a[1], value)]         
             
-        for move in extractPossibleMoves(game_state):
-            print(move)
+        # for move in extractPossibleMoves(game_state.board, game_state):
+        #     print(move)
 
-        def scoreFunction(move, state):
+        def scoreFunction(move, game_state):
             """
             Calculates a score for each possible move.
                 @param move: an object with a position and value 
@@ -90,28 +91,28 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 """Checks if the column is completed.
                 """
 
-                for element_col in range(state.board.m):
-                    if state.board.get(element_col, j) == SudokuBoard.empty and element_col!=i:
+                for element_col in range(game_state.board.m):
+                    if game_state.board.get(element_col, j) == SudokuBoard.empty and element_col!=i:
                         return False
                 return True
             
             def rowFill(i,j):
                 """Checks if the row is completed.
                 """
-                for element_row in range(state.board.n):
-                    if state.board.get(i, element_row) == SudokuBoard.empty and element_row!=j:
+                for element_row in range(game_state.board.n):
+                    if game_state.board.get(i, element_row) == SudokuBoard.empty and element_row!=j:
                         return False
                 return True
             
             def regionFill(i,j):
                 """Checks if the region is completed.
                 """
-                x = i - (i % state.board.m)
-                y = j - (j % state.board.n)
+                x = i - (i % game_state.board.m)
+                y = j - (j % game_state.board.n)
 
-                for a in range(state.board.m):
-                    for b in range(state.board.n):
-                        if state.board.get(x+a, y+b) == SudokuBoard.empty and \
+                for a in range(game_state.board.m):
+                    for b in range(game_state.board.n):
+                        if game_state.board.get(x+a, y+b) == SudokuBoard.empty and \
                             (x+a !=i or y+b !=j):
                             return False
                 return True
@@ -132,31 +133,32 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
         # self.propose_move(random.choice(extractPossibleMoves(game_state)))
 
-        def getChildren(state):
+        def getChildren(game_state):
+            """Returns for each move the new board, score and the move itself.
+                @param state: 
+                """
 
             pairs = []
-            child_board = deepcopy(state)
-            print("beginstate", child_board)
-            for move in extractPossibleMoves(state):
-                child_board.board.put(move.i, move.j, move.value)
-                new_score = scoreFunction(move, state)
-                print(move, "state na move", child_board, new_score)
+            for move in extractPossibleMoves(game_state):
+                child_board = deepcopy(game_state.board)
+                child_board.put(move.i, move.j, move.value)
+                new_score = scoreFunction(move, game_state)
                 list = child_board, new_score, move
                 pairs.append(list)
             return pairs
         
         print(getChildren(game_state))
         
-        def minimax(state, depth: int, isMaximisingPlayer: bool, score: int, alpha: float, beta: float):
+        def minimax(game_state, depth: int, isMaximisingPlayer: bool, score: int, alpha: float, beta: float):
             """Creates a tree with a given depth and returns a move.
                 @param state: the current state of the sudoku
                 @param depth: the depth of the tree
                 @param isMaximisingPlayer: a boolean that returns True if it is the maximising player
             """ 
-            if len(extractPossibleMoves(state)) == 0 or depth == 0:
+            if len(extractPossibleMoves(game_state)) == 0 or depth == 0:
                 return score, None
 
-            children = getChildren(state)
+            children = getChildren(game_state)
             if isMaximisingPlayer:
                 maxEval = float('-inf')
                 for pairs in children:
@@ -169,6 +171,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     if beta <= alpha:
                         break
                     score -= pairs[1]
+                # print("maxEval: ", maxEval, "end_move: ", end_move)
                 return maxEval, end_move
             
             else:
@@ -184,10 +187,11 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     if beta <= alpha:
                         break
                     score -= pairs[1]
+                # print("minEval: ", minEval, "end_move: ", end_move)
                 return minEval, end_move
             
         for d in range(1, game_state.board.squares.count(SudokuBoard.empty)+1):
-            _, do_move = minimax(game_state.board, d, True, 0, float("-inf"), float("inf"))
+            _, do_move = minimax(game_state, d, True, 0, float("-inf"), float("inf"))
             self.propose_move(do_move)
 
 
