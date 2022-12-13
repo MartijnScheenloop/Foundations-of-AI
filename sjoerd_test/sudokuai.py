@@ -198,7 +198,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 print("minEval: ", minEval, "end_move: ", end_move)
                 return minEval, end_move
             
-        for d in range(0, game_state.board.squares.count(SudokuBoard.empty)):
+        for d in range(1, game_state.board.squares.count(SudokuBoard.empty)+1):
             print("iteration", d)
             _, do_move = minimax(game_state, d, True, 0, float("-inf"), float("inf"))
             self.propose_move(do_move)
