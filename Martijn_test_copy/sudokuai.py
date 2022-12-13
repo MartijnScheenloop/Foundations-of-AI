@@ -273,12 +273,24 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
         #     return move, (value + curr_score)
 
+
+        # Quantify stage of the game and based on that pick a move selection tactic
+
+        N_empty_squares = game_state.board.squares.count(0)
+        N_total_squares = game_state.board.N
+
+        # If board is relatively empty (define):
+
+        if 
         self.propose_move(extractPossibleMoves(game_state)[0])
 
-        _, move_depth_2 = minimax(game_state, True, 2)
-        self.propose_move(move_depth_2)
-        # #Iterative Deepening
-        # for d in range(1, game_state.board.squares.count(SudokuBoard.empty)+1):
-        #     d_move, _ = minimax(game_state, True, d)
-        #     self.propose_move(d_move)
+        # If board is partly filled but far from totally filled, use Last Possible Number:
+
+
+        # If board is over x% filled, use Minimax:
+
+            #Iterative Deepening
+        for d in range(1, game_state.board.squares.count(SudokuBoard.empty)+1):
+            d_move, _ = minimax(game_state, True, d)
+            self.propose_move(d_move)
 
