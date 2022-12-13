@@ -26,6 +26,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 @param board: the board with N**2 entries.
             """
 
+            board = game_state.board
             empty_list = []
             for a in range(N**2):
                 i,j = SudokuBoard.f2rc(board, a)
@@ -35,7 +36,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
         print(emptyList(game_state.board))         
                
-        def extractPossibleMoves(state):
+        def extractPossibleMoves(game_state: GameState):
             """
             Returns the possible moves for a certain game state.
             @param state: the current game state in a SudokuBoard object
@@ -47,7 +48,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     """Checks if the region is completed.
                     """
                     for element_col in range(N):
-                        if state.board.get(element_col, j) == value:
+                        if game_state.board.get(element_col, j) == value:
                             return False
                     return True
 
@@ -55,108 +56,120 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     """Checks if the row is completed.
                     """
                     for element_row in range(N):
-                        if state.board.get(i, element_row) == value:
+                        if game_state.board.get(i, element_row) == value:
                             return False
                     return True
             
                 def checkRegion(i,j,value):
                     """Checks if the region is completed.
                     """
-                    x = i - (i % state.board.m)
-                    y = j - (j % state.board.n)
+                    x = i - (i % game_state.board.m)
+                    y = j - (j % game_state.board.n)
 
-                    for element_col in range(state.board.m):
-                        for element_row in range(state.board.n):
-                            if state.board.get(x+element_col, y+element_row) == value:
+                    for element_col in range(game_state.board.m):
+                        for element_row in range(game_state.board.n):
+                            if game_state.board.get(x+element_col, y+element_row) == value:
                                 return False
                     return True
 
-                return not TabooMove(i,j,value) in state.taboo_moves \
+                return not TabooMove(i,j,value) in game_state.taboo_moves \
                         and checkColumn(i,j,value) and checkRow(i,j,value) and checkRegion(i,j,value)
 
 
-            return [Move(a[0], a[1], value) for a in emptyList(state.board) for value in range(1, N+1) if possible(a[0], a[1], value)]         
+            return [Move(a[0], a[1], value) for a in emptyList(game_state) for value in range(1, N+1) if possible(a[0], a[1], value)]         
             
         for move in extractPossibleMoves(game_state):
             print(move)
 
-        def scoreFunction(move, state):
+        def scoreFunction(move, game_state):
             """
             Calculates a score for each possible move.
                 @param move: an object with a position and value 
             """
-            
-            def colFill(i,j):
-                """Checks if the column is completed.
-                """
 
-                for element_col in range(state.board.m):
-                    if state.board.get(element_col, j) == SudokuBoard.empty and element_col!=i:
-                        return False
-                return True
-            
-            def rowFill(i,j):
-                """Checks if the row is completed.
-                """
-                for element_row in range(state.board.n):
-                    if state.board.get(i, element_row) == SudokuBoard.empty and element_row!=j:
-                        return False
-                return True
-            
-            def regionFill(i,j):
-                """Checks if the region is completed.
-                """
-                x = i - (i % state.board.m)
-                y = j - (j % state.board.n)
+            board_str = game_state.board.squares
+            rows = []
+            N = game_state.board.N
+            for i in range(N):
+                rows.append(board_str[i*N : (i+1)*N])
+            columns = np.transpose(rows)
+            current_rows = deepcopy(rows)
+            current_columns = deepcopy(columns)
 
-                for a in range(state.board.m):
-                    for b in range(state.board.n):
-                        if state.board.get(x+a, y+b) == SudokuBoard.empty and \
-                            (x+a !=i or y+b !=j):
-                            return False
-                return True
-            
-            partsFilled = colFill(move.i, move.j) + rowFill(move.i, move.j) + regionFill(move.i, move.j)
-            
-            if partsFilled == 0:
-                return int(0)
-            if partsFilled == 1:
-                return int(1)
-            if partsFilled == 2:
-                return int(3)
-            if partsFilled == 3:
-                return int(7)
+            current_row_complete = not 0 in current_rows[move.i]
+            current_column_complete = not 0 in current_columns[move.j]
+
+            new_rows = deepcopy(current_rows)
+            new_rows[move.i][move.j] = move.value
+            new_columns = np.transpose(new_rows)
+
+            new_row_complete = not 0 in new_rows[move.i]
+            new_column_complete = not 0 in new_columns[move.j]
+                
+            count = 0
+            if new_row_complete and not current_row_complete:
+                count += 1
+            if new_column_complete and not current_column_complete: 
+                count += 1
+
+            root_row = np.sqrt(len(current_rows))
+            size_row = int(root_row // 1)
+            root_col = np.sqrt(len(current_rows))
+            size_col = int(-1 * root_col // 1 * -1)
+            prep_row = move.i/size_row
+            row = int(prep_row // 1)
+            prep_col = move.j/size_col
+            col = int(prep_col // 1)
+            y= np.vstack([xi for xi in current_rows])           
+            current_section = np.array(y[row*size_row:row*size_row+size_row,col*size_col:col*size_col+size_col]).reshape(-1,).tolist()
+                        
+            if current_section.count(0) == 1:
+                count += 1
+
+            score = 0
+
+            if count == 0:
+                score = 0
+            elif count == 1:
+                score = 1
+            elif count == 2:
+                score = 3
+            elif count == 3:
+                score = 7
+
+            return int(score)
     
         for move in extractPossibleMoves(game_state):
             print("output count function: ", move, "reward ", scoreFunction(move, game_state))
 
         # self.propose_move(random.choice(extractPossibleMoves(game_state)))
 
-        def getChildren(state):
+        def getChildren(game_state):
+            """Returns for each move the new board, score and the move itself.
+                @param state: 
+                """
 
             pairs = []
-            child_board = deepcopy(state)
-            print("beginstate", child_board)
-            for move in extractPossibleMoves(state):
-                child_board.board.put(move.i, move.j, move.value)
-                new_score = scoreFunction(move, state)
-                print(move, "state na move", child_board, new_score)
+            for move in extractPossibleMoves(game_state):
+                child_board = deepcopy(game_state.board)
+                child_board.put(move.i, move.j, move.value)
+                new_score = scoreFunction(move, game_state)
                 list = child_board, new_score, move
                 pairs.append(list)
             return pairs
         
         print(getChildren(game_state))
         
-        def minimax(state, depth: int, isMaximisingPlayer: bool, score: int, alpha: float, beta: float):
+        def minimax(game_state, depth: int, isMaximisingPlayer: bool, score: int, alpha: float, beta: float):
             """Creates a tree with a given depth and returns a move.
                 @param state: the current state of the sudoku
                 @param depth: the depth of the tree
                 @param isMaximisingPlayer: a boolean that returns True if it is the maximising player
             """ 
-            if len(extractPossibleMoves(state)) == 0 or depth == 0:
+            if len(extractPossibleMoves(game_state)) == 0 or depth == 0:
                 return score, None
 
-            children = getChildren(state)
+            children = getChildren(game_state)
             if isMaximisingPlayer:
                 maxEval = float('-inf')
                 for pairs in children:
@@ -169,6 +182,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     if beta <= alpha:
                         break
                     score -= pairs[1]
+                # print("maxEval: ", maxEval, "end_move: ", end_move)
                 return maxEval, end_move
             
             else:
@@ -184,132 +198,9 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     if beta <= alpha:
                         break
                     score -= pairs[1]
+                # print("minEval: ", minEval, "end_move: ", end_move)
                 return minEval, end_move
             
         for d in range(1, game_state.board.squares.count(SudokuBoard.empty)+1):
-            _, do_move = minimax(game_state.board, d, True, 0, float("-inf"), float("inf"))
+            _, do_move = minimax(game_state, d, True, 0, float("-inf"), float("inf"))
             self.propose_move(do_move)
-
-
-        # print(evaluate(game_state))
-
-            # best_value = 0
-            # best_move = random.choice(extractPossibleMoves(state))
-            # for move in extractPossibleMoves(state):
-            #     value = countFunction(move, state)
-            #     if value > best_value:
-            #         best_move = move
-            #         best_value = value
-            # return best_move, best_value
-        
-        # optimal_move = evaluate(game_state)[0]
-        # self.propose_move(optimal_move)
-
-        #     scores = []
-        #     for move in extractPossibleMoves(state):
-        #         score = countFunction(move, state)
-        #         if isMaxiPlayer:
-        #             total_score = curr_score + score
-        #         else: 
-        #             total_score = curr_score - score
-        #         state.board.put(move.i, move.j, move.value)
-        #         _, final_value = minimax(state, False, max_depth, curr_depth + 1, total_score)
-        #         scores.append((move, final_value))
-        #         state.board.put(move.i, move.j, SudokuBoard.empty)
-
-        #     if isMaxiPlayer:
-        #         move, value = max(scores, key=lambda score:score[1])
-        #         return move, (value + curr_score)
-        #     move, value = min(scores, key=lambda score: score[1])
-        #     return move, (value + curr_score)
-
-        # for d in range(1, game_state.board.squares.count(SudokuBoard.empty)+1):
-        #     d_move, _ = minimax(game_state, True, d)
-        #     self.propose_move(d_move)
-
-            
-         # Move for the final depth
-            # if len(extractPossibleMoves(state)) == 1 or current_depth == max_depth:
-            #     eval_move, eval_value = evaluate(state)
-            #     if isMaxiPlayer:
-            #         return eval_move, eval_value
-            #     return eval_move, -eval_value    
-
-        # def minimax(state, isMax, max_depth, curr_depth = 0, curr_score = 0):
-        #     """Creates a tree with a given depth and returns a move.
-        #         @param isMax: boolean value that is True if it is the maximizing player
-        #         @param max_depth: the maximum depth of the tree
-        #         @param curr_depth: the current depth
-        #         @param curr_score: the count of the parent node
-        #     """ 
-
-        #     if len(extractPossibleMoves(state)) == 0:
-        #         if isMax:
-        #             return None, float("-inf")
-        #         return None, float("inf")
-
-        #     if len(extractPossibleMoves(state)) == 1 or curr_depth == max_depth:
-        #         move, value = evaluate(state)
-        #         if isMax:
-        #             return move, value
-        #         return move, -value
-
-        #     scores = []
-        #     for move in extractPossibleMoves(state):
-        #         score = countFunction(move, state)
-        #         if isMax:
-        #             total_score = curr_score + score
-        #         else: 
-        #             total_score = curr_score - score
-        #         state.board.put(move.i, move.j, move.value)
-        #         final_move, final_value = minimax(state, not isMax, max_depth, curr_depth + 1, total_score)
-        #         scores.append((move, final_value))
-        #         state.board.put(move.i, move.j, SudokuBoard.empty)
-
-        #     if isMax:
-        #         move, value = max(scores, key=lambda score:score[1])
-        #         return move, (value + curr_score)
-        #     move, value = min(scores, key=lambda score: score[1])
-        #     return move, (value + curr_score)
-
-        # self.propose_move(extractPossibleMoves(game_state)[0])
-
-        # Move if there are no possible moves
-            # if len(extractPossibleMoves(state)) == 0 or depth == 0:
-            #     return None, score
-            
-            # if isMaxiPlayer:
-            #     maxEval = float('-inf')
-            #     for moves in extractPossibleMoves(state):
-            #         score += countFunction(moves, state)
-            #         _, eval = minimax(state, depth+1, False, score, alpha, beta)
-            #         if maxEval < eval:
-            #             maxEval = eval
-            #             new_move_max = moves 
-            #         alpha = max(alpha, eval)
-            #         if beta <= alpha:
-            #             break
-            #         score -= countFunction(moves, state)
-            #     return new_move_max, maxEval
-            
-            # else:
-            #     minEval = float('inf')
-            #     for moves in extractPossibleMoves(state):
-            #         score += countFunction(moves, state)
-            #         _, eval = minimax(state, depth+1, True, score, alpha, beta)
-            #         if minEval > eval:
-            #             minEval = eval
-            #             new_move_min = moves 
-            #         minEval = min(minEval, eval)
-            #         if beta <= alpha:
-            #             break
-            #         score -= countFunction(moves, state)
-            #     return new_move_min
-
-                   # def evaluate(state):
-        #     """Evaluates the score for the given state.
-        #     """
-            
-        #     for move in getMoves(state):
-        #         score = scoreFunction(move, state)
-        #     return move, score
