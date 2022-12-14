@@ -2,15 +2,15 @@
 #  Software License, (See accompanying file LICENSE or copy at
 #  https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import random
-import time
+# import random
+# import time
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove, print_board
 import competitive_sudoku.sudokuai
 
 # Extra packages:
 import numpy as np
-import math
 from copy import deepcopy
+# import math
 
 def compute_possible_moves(game_state):
     # Determine if a certain move is non-taboo in a certain gamestate
@@ -24,27 +24,27 @@ def compute_possible_moves(game_state):
     N = game_state.board.N
     for i in range(N):
         rows.append(board_str[i*N : (i+1)*N])
-    
     columns = np.transpose(rows)
-    # Determine if action is legal (not already present in section, row or column)
-    def legal(i,j,value,data):
-        
+
+    def legal(i: int,j: int, value: int, data):
+        """Return all the legal moves at a given game state.
+
+            Parameters:
+                    i (int): the row index
+                    j (int): the column index
+                    value (int): the value placed in the square
+
+            Returns:
+                    binary_sum (str): Binary string of the sum of a and b
+        """
         root_row = np.sqrt(len(data))
         size_row = int(root_row // 1)
-            
         root_col = np.sqrt(len(data))
-        size_col = int(-1 * root_col // 1 * -1)
-         
+        size_col = int(-1 * root_col // 1 * -1)  
         prep_row = i/size_row
         row = int(prep_row // 1)
-
         prep_col = j/size_col
         col = int(prep_col // 1)
-
-        # size_row = math.floor(np.sqrt(len(data)))
-        # size_col = math.ceil(np.sqrt(len(data)))
-        # row = math.floor(i/size_row)
-        # col = math.floor(j/size_col)
 
         y= np.vstack([xi for xi in data])
         return not value in np.array(y[row*size_row:row*size_row+size_row,col*size_col \
@@ -90,24 +90,12 @@ def compute_possible_moves(game_state):
         # Check if a section is completed, and if so add 1 to the counter
         root_row = np.sqrt(len(current_rows))
         size_row = int(root_row // 1)
-        # size_row_old = math.floor(np.sqrt(len(current_rows)))
-        # print("size row", size_row, size_row_old)
-
         root_col = np.sqrt(len(current_rows))
         size_col = int(-1 * root_col // 1 * -1)
-        # size_col_old = math.ceil(np.sqrt(len(current_rows)))
-        # print("size col", size_col, size_col_old)
-
         prep_row = move.i/size_row
         row = int(prep_row // 1)
-        # row_old = math.floor(move.i/size_row)
-        # print("size row", row, row_old)
-
         prep_col = move.j/size_col
         col = int(prep_col // 1)
-        # col_old = math.floor(move.j/size_col) 
-        # print("size row", col, col_old)
-
         y= np.vstack([xi for xi in current_rows])           
         current_section = np.array(y[row*size_row:row*size_row+size_row,col*size_col:col*size_col+size_col]).reshape(-1,).tolist()
                     
@@ -116,13 +104,13 @@ def compute_possible_moves(game_state):
 
         # Create a list containing tuples of moves and their score counts
         if count == 0:
-            possible_moves_scores.append((move, 0))
+            possible_moves_scores.append([move, 0])
         if count == 1:
-            possible_moves_scores.append((move, 1))
+            possible_moves_scores.append([move, 1])
         if count == 2:
-            possible_moves_scores.append((move, 3))
+            possible_moves_scores.append([move, 3])
         if count == 3:
-            possible_moves_scores.append((move, 7))
+            possible_moves_scores.append([move, 7])
 
     return [possible_moves, possible_moves_scores]
 
@@ -187,51 +175,80 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         """
         ...
         """
-        current_game_state = deepcopy(game_state)
-        possible_moves_scores = compute_possible_moves(current_game_state)
-        possible_moves_scores = possible_moves_scores[1]
 
-        # Select first possible move
-        self.propose_move(possible_moves_scores[0][0])
+        def minimax_depth_2(game_state, current_depth):
+            """
+            Run a minimax algorithm with depth equal to 2 and return a list 
+            consisting of the possible moves and their corresponding scores.
+            """
 
-        # if depth == 0:
-        #     print("Game Over")
+            current_game_state = deepcopy(game_state)
+            possible_moves_scores = compute_possible_moves(current_game_state)
+            possible_moves_scores = possible_moves_scores[1]
 
-        best_count = 0
-        d = 0
-        possible_moves_new_scores = []
-        for move in possible_moves_scores:
-            print('\nPLAYER 1 MOVE:', move[0], 'Score:', move[1])
-            # count = move[1]
-            # if count > best_count:
-            #     best_count = count
-            #     proposed_move = move[0]
-            
-            new_game_state = deepcopy(current_game_state)
-            new_game_state.board.put(move[0].i, move[0].j, move[0].value)
+            # Select first possible move
+            self.propose_move(possible_moves_scores[0][0])
 
-            # Compute possible moves for opponent based on new board
-            opp_possible_moves_scores = compute_possible_moves(new_game_state)
-            opp_possible_moves_scores = opp_possible_moves_scores[1]
+            for move in possible_moves_scores:
+                print('\nPLAYER 1 MOVE:', move[0], 'Score:', move[1])
+                
+                new_game_state = deepcopy(current_game_state)
+                new_game_state.board.put(move[0].i, move[0].j, move[0].value)
 
-            max_opp_score = 0
-            for opp_move in opp_possible_moves_scores:
-                print('Player 2 possible move:', f'({opp_move[0].i},{opp_move[0].j}) -> {opp_move[0].value}', 'Score:', opp_move[1])
-                if opp_move[1] > max_opp_score:
-                    max_opp_score = opp_move[1]
-            
-            move = list(move)
-            move[1] = move[1] - max_opp_score
-            possible_moves_new_scores.append(tuple(move))
-            print('New score:', move[1])
+                # Compute possible moves for opponent based on new board
+                opp_possible_moves_scores = compute_possible_moves(new_game_state)
+                opp_possible_moves_scores = opp_possible_moves_scores[1]
+
+                max_opp_score = 0
+                max_opp_move = None
+                for opp_move in opp_possible_moves_scores:
+                    print('Player 2 possible move:', f'({opp_move[0].i},{opp_move[0].j}) -> {opp_move[0].value}', 'Score:', opp_move[1])
+                    if opp_move[1] > max_opp_score:
+                        max_opp_score = opp_move[1]
+                        max_opp_move = opp_move[0]
+                    # elif game_state.board.squares.count(0) == 1:
+                        
+                
+                print(move)
+                score = move[current_depth] - max_opp_score
+                move.append(max_opp_move)
+                move.append(score)
+                # print(move)
+                print('New score:', move[current_depth+3])
+
+            # Select the move with the highest count, which results in the highest score difference
+            best_score = -1000000
+            for branch in possible_moves_scores:
+                score = branch[1]
+                if score > best_score:
+                    best_score = score
+                    self.propose_move(branch[0])
+            # print('\nBest new score:', best_score)
+
+            current_depth += 2
+
+            return [possible_moves_scores, current_depth]
         
-        # print(f'\n{possible_moves_new_scores}')
+        # possible_moves_scores = []
+        # current_depth = 0
+        # test = minimax_depth_2(game_state, current_depth)
+        # current_depth = test[1]
+        # branches = test[0]
+        # print(branches)
+        
+        # for branch in branches:
+        #     print('\nBranch:', branch)
+        #     last_game_state = deepcopy(game_state)
+        #     for d in range(0, current_depth*2, 2):
+        #         move = branch[d]
+        #         if not last_game_state.board.squares.count(0) == 1:
+        #             last_game_state.board.put(move.i, move.j, move.value)
 
-        # Select the move with the highest count, which results in the highest score
-        best_score = -math.inf
-        for move in possible_moves_new_scores:
-            score = move[1]
-            if score > best_score:
-                best_score = score
-                self.propose_move(move[0])
-        print('\nBest new score:', best_score)
+        #     ok = minimax_depth_2(last_game_state, current_depth)
+        #     print(ok[0])
+        #     print('\nDepth:', ok[1])
+
+
+
+
+
