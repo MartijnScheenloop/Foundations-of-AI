@@ -29,9 +29,15 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         fraction_filled = 1 - N_empty_squares/N_total_squares
         print('Filled:', fraction_filled, '\n')
 
-        # # If board is relatively empty, pick a random possible move:
+
+        ##############################
+
+
+        # If board is relatively empty, pick a random possible move:
 
         if fraction_filled < 0.5:
+            print('RANDOM MOVE\n')
+
             # Determine if a certain move is non-taboo in a certain gamestate
             def non_taboo(i, j, value):
                 return game_state.board.get(i, j) == SudokuBoard.empty \
@@ -68,13 +74,22 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
             self.propose_move(random.choice(possible_moves))
 
-        # if fraction_filled <= 0.2:
+
+        ##############################
+
+
+        # if fraction_filled <= X:
+
+
+        ##############################
 
 
         # If board is partly filled but far from totally filled, use Last Possible Number:
 
-        if fraction_filled >= 0.5:
-        # and fraction_filled < 0.5:
+        if fraction_filled >= 0.5 and fraction_filled < 0.8:
+            print('LAST POSSIBLE NUMBER HEURISTIC\n')
+
+            # Define the rows, columns and sections of the current board
             board = game_state.board
             board_str = board.squares
 
@@ -92,36 +107,35 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             # print(sections)
 
             def scoreFunction(move, game_state):
-                """
-                Calculates a score for each possible move.
-                    @param move: an object with a position and value 
+                """Calculates a score for a given move.
                 """
 
-                board_str = game_state.board.squares
-                rows = []
-                N = game_state.board.N
-                for i in range(N):
-                    rows.append(board_str[i*N : (i+1)*N])
+                # Make copies of the board's rows, columns and sections
                 columns = np.transpose(rows)
                 current_rows = deepcopy(rows)
                 current_columns = deepcopy(columns)
 
+                # Check if current rows and columns are already completed
                 current_row_complete = not 0 in current_rows[move.i]
                 current_column_complete = not 0 in current_columns[move.j]
 
+                # Fill in the move and define the new rows and columns
                 new_rows = deepcopy(current_rows)
                 new_rows[move.i][move.j] = move.value
                 new_columns = np.transpose(new_rows)
 
+                # Check if the new rows and columns are completed
                 new_row_complete = not 0 in new_rows[move.i]
                 new_column_complete = not 0 in new_columns[move.j]
-                    
+                
+                # Check if a row and/or column has been completed by the current move
                 count = 0
                 if new_row_complete and not current_row_complete:
                     count += 1
                 if new_column_complete and not current_column_complete: 
                     count += 1
 
+                # Define the move's sections
                 root_row = np.sqrt(len(current_rows))
                 size_row = int(root_row // 1)
                 root_col = np.sqrt(len(current_rows))
@@ -132,10 +146,12 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 col = int(prep_col // 1)
                 y= np.vstack([xi for xi in current_rows])           
                 current_section = np.array(y[row*size_row:row*size_row+size_row,col*size_col:col*size_col+size_col]).reshape(-1,).tolist()
-                            
+                
+                # Check if the move completes a section
                 if current_section.count(0) == 1:
                     count += 1
-
+                
+                # Appoint a score to the move and return an integer
                 score = 0
 
                 if count == 0:
@@ -150,9 +166,14 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 return int(score)
 
             def not_possible(i, j):
+                """For a given square check what numbers can not be filled in.
+                """
+
+                # Define the row and column of the square
                 row_i = set(rows[i])
                 col_j = set(columns[j])
 
+                # Define the section of the square
                 root_row = np.sqrt(len(rows))
                 size_row = int(root_row // 1)
                 root_col = np.sqrt(len(rows))
@@ -164,14 +185,15 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
                 section = set(np.array(sections[row*size_row:row*size_row+size_row,col*size_col:col*size_col+size_col]).reshape(-1,).tolist())
 
-                # print('\n', row_i, col_j, section)
-                # print('\n', type(row_i), type(col_j), type(section))
+                # Define the total set of numbers that are not possible and return it
                 total_set = row_i.union(col_j)
                 total_set = total_set.union(section)
                 total_set.remove(0)
-                # print(total_set)
 
                 return total_set
+
+            # For all empty squares check if there is only a single possible move 
+            # and if so, add it to the list single_possibility_moves
 
             single_possibility_moves = []
 
@@ -193,6 +215,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                             single_possibility_moves.append((move, score))
                             # print('We got a single possibility! Proposed move:', move)
             
+            # Propose the single possibility move that gets the highest reward
+
             max_score = 0
             for move in single_possibility_moves:
                 if move[1] >= max_score:
@@ -202,11 +226,12 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             self.propose_move(best_move)
 
 
-
+        ##############################
 
 
         # # If board is over x% filled, use Minimax with depth=2:
-        elif fraction_filled >= 1:
+        if fraction_filled >= 0.8:
+            print('MINIMAX DEPTH=2\n')
 
             def compute_possible_moves(game_state):
                 # Determine if a certain move is non-taboo in a certain gamestate
