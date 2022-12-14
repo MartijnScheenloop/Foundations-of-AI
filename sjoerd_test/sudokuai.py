@@ -21,9 +21,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         N = game_state.board.N
 
         def emptyList(board):
-            """
-            Returns a list with all the empty squares
-                @param board: the board with N**2 entries.
+            """Returns a list with all the empty squares
+            @param board: the board with N**2 entries.
             """
 
             board = game_state.board
@@ -32,28 +31,36 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 i,j = SudokuBoard.f2rc(board, a)
                 if board.get(i,j) == SudokuBoard.empty:
                     empty_list.append([i,j])
-            return empty_list  
-
-        # print(emptyList(game_state.board))         
+            return empty_list    
                
         def extractPossibleMoves(game_state: GameState):
-            """
-            Returns the possible moves for a certain game state.
-            @param state: the current game state in a SudokuBoard object
+            """Returns the possible moves for a certain game state.
+            @param game_state: the current game state 
             """
 
             def possible(i,j,value):
-
-                def checkColumn(i,j,value):
-                    """Checks if the region is completed.
+                """Checks the move for the columns, rows and regions.
+                @param i: the row index
+                @param j: the column index
+                @param value: the value of the move
+                """
+                
+                def checkColumn(i, j,value):
+                    """Checks if the column already contains the value.
+                    @param i: the row index
+                    @param j: the column index
+                    @param value: the value of the move
                     """
                     for element_col in range(N):
                         if game_state.board.get(element_col, j) == value:
                             return False
                     return True
 
-                def checkRow(i,j,value):
-                    """Checks if the row is completed.
+                def checkRow(i, j, value):
+                    """Checks if the row already contains the value.
+                    @param i: the row index
+                    @param j: the column index
+                    @param value: the value of the move
                     """
                     for element_row in range(N):
                         if game_state.board.get(i, element_row) == value:
@@ -61,7 +68,10 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     return True
             
                 def checkRegion(i,j,value):
-                    """Checks if the region is completed.
+                    """Checks if the region already contains the value.
+                    @param i: the row index
+                    @param j: the column index
+                    @param value: the value of the move
                     """
                     x = i - (i % game_state.board.m)
                     y = j - (j % game_state.board.n)
@@ -78,10 +88,14 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
             return [Move(a[0], a[1], value) for a in emptyList(game_state) for value in range(1, N+1) if possible(a[0], a[1], value)]         
 
+        #Returns the best instant move to avoid losing with time_limit == 0.1
+        best_instant_move = extractPossibleMoves(game_state)[0]
+        self.propose_move(best_instant_move)
+
         def scoreFunction(move, game_state):
-            """
-            Calculates a score for each possible move.
-                @param move: an object with a position and value 
+            """ Calculates a score for each possible move.
+            @param move: an object with a position and value
+            @param game_state: the current game state
             """
 
             board_str = game_state.board.squares
@@ -135,27 +149,24 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 score = 7
 
             return int(score)
-    
-        for move in extractPossibleMoves(game_state):
-            print("output count function: ", move, "reward ", scoreFunction(move, game_state))
 
-        # self.propose_move(random.choice(extractPossibleMoves(game_state)))
-
-        def getChildren(state):
+        def getChildren(state, isMaximisingPlayer):
             """Returns for each move the new board, score and the move itself.
-                @param state: 
-                """
-
+            @param state: 
+            """
             pairs = []
             for move in extractPossibleMoves(state):
                 child_board = deepcopy(state)
                 child_board.board.put(move.i, move.j, move.value)
-                new_score = scoreFunction(move, state)
-                list = child_board, new_score, move
+
+                if isMaximisingPlayer:
+                    new_score = scoreFunction(move, state)
+                else:
+                    new_score = scoreFunction(move,state) *(-1)
+
+                list = [child_board, new_score, move]
                 pairs.append(list)
             return pairs
-        
-        # print(getChildren(game_state))
         
         def minimax(game_state, depth: int, isMaximisingPlayer: bool, score: int, alpha: float, beta: float):
             """Creates a tree with a given depth and returns a move.
@@ -166,7 +177,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             if len(extractPossibleMoves(game_state)) == 0 or depth == 0:
                 return score, None
 
-            children = getChildren(game_state)
+            children = getChildren(game_state, isMaximisingPlayer)
             if isMaximisingPlayer:
                 maxEval = float('-inf')
                 for pairs in children:
@@ -198,7 +209,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 print("minEval: ", minEval, "end_move: ", end_move)
                 return minEval, end_move
             
-        for d in range(1, game_state.board.squares.count(SudokuBoard.empty)+1):
-            print("iteration", d)
-            _, do_move = minimax(game_state, d, True, 0, float("-inf"), float("inf"))
-            self.propose_move(do_move)
+        # for d in range(1, game_state.board.squares.count(SudokuBoard.empty)+1):
+        #     print("iteration", d)
+        _, do_move = minimax(game_state, 2, True, 0, float("-inf"), float("inf"))
+        self.propose_move(do_move)
