@@ -2,7 +2,7 @@
 #  Software License, (See accompanying file LICENSE or copy at
 #  https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import random
+# import random
 # import time
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove, print_board
 import competitive_sudoku.sudokuai
@@ -21,76 +21,86 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
     def compute_best_move(self, game_state: GameState) -> None:
 
-        # # Pick the first possible move to ensure a move under 0.1s
-        # first_move = first_possible_move(game_state)
-        # self.propose_move(first_move)
-
         # Quantify stage of the game and based on that pick a move selection tactic
-
         N = game_state.board.N
-
-        def possible(i, j, value):
-            return game_state.board.get(i, j) == SudokuBoard.empty \
-                and not TabooMove(i, j, value) in game_state.taboo_moves
-
-        all_moves = [Move(i, j, value) for i in range(N) for j in range(N)
-                    for value in range(1, N+1) if possible(i, j, value)]
-        move = all_moves[0]
-        self.propose_move(move)
-
         N_empty_squares = game_state.board.squares.count(0)
         N_total_squares = N*N
         fraction_filled = 1 - N_empty_squares/N_total_squares
         print('Filled:', fraction_filled, '\n')
 
-
-        ##############################
-
-
-        # If board is relatively empty, pick a random possible move:
-
-        if fraction_filled >=0 and fraction_filled <0.2:
-            print('RANDOM MOVE\n')
-
-            # Determine if a certain move is non-taboo in a certain gamestate
-            def non_taboo(i, j, value):
-                return game_state.board.get(i, j) == SudokuBoard.empty \
-                    and not Move(i, j, value) in game_state.taboo_moves
-        
-            # Create a list of the gamestate board's rows and a list of its columns (used in legal function)
+        def nonTabooMove(i: int, j: int, value: int) -> bool:
+            """Checks if the move is non-taboo for the empty square.
+            @param i: the index of the row for the move
+            @param j: the index of the column for the move
+            @param value: the value of the move
+            """
+            return game_state.board.get(i, j) == SudokuBoard.empty \
+                and not Move(i, j, value) in game_state.taboo_moves
+    
+        #Prepare the rows and columns as a list
+        def rowsList(game_state: GameState):
+            """Returns the game_state in lists of rows.
+            @param game_state: the current game state
+            """
             board_str = game_state.board.squares
             rows = []
-
             for i in range(N):
                 rows.append(board_str[i*N : (i+1)*N])
-            
-            columns = np.transpose(rows)
-
-            # Determine if action is legal (not already present in section, row or column)
-            def legal(i,j,value,data):
-                size_row = math.floor(np.sqrt(len(data)))
-                size_col = math.ceil(np.sqrt(len(data)))
-                row = math.floor(i/size_row)
-                col = math.floor(j/size_col)
-                y= np.vstack([xi for xi in data])
-                return not value in np.array(y[row*size_row:row*size_row+size_row,col*size_col \
-                    :col*size_col+size_col]).reshape(-1,).tolist() and not value in rows[i] and not value in columns[j]
-    
-            # Generate a list of all possible moves (legal AND non-taboo)
-            possible_moves = []
-
+                print(rows)
+                return rows
+        
+        def columnsList(game_state: GameState):
+            """Returns the game_state in lists of columns.
+            @param game_state: the current game state
+            """
+            board_str = game_state.board.squares
+            columns = []
             for i in range(N):
-                for j in range(N):
-                    for value in range(1, N+1):
-                        if non_taboo(i, j, value):
-                            if legal(i, j, value, rows):
-                                possible_moves.append(Move(i, j, value))
+                columns.append(board_str[i*N : (i+1)*N])
+                return np.transpose(columns)
+            
+        def legalMove(i: int, j: int, value: int, game_state) -> bool:
+            """Checks if the move is legal for the solution of the sudoku.
+            @param i: the index of the row for the move
+            @param j: the index of the column for the move
+            @param value: the value of the move
+            @param data: the sudoku as a list of rows
+            """  
 
+            rows = len(rowsList(game_state))
+            root_row = np.sqrt(len(rowsList(game_state)))
+            size_row = int(root_row // 1)
+                
+            root_col = np.sqrt(len(data))
+            size_col = int(-1 * root_col // 1 * -1)
+            
+            prep_row = i/size_row
+            row = int(prep_row // 1)
+
+            prep_col = j/size_col
+            col = int(prep_col // 1)
+
+            y= np.vstack([xi for xi in data])
+            return not value in np.array(y[row*size_row:row*size_row+size_row,col*size_col \
+                :col*size_col+size_col]).reshape(-1,).tolist() and not value in rows[i] and not value in columns[j]
+
+        #Generate a list of possible moves and propose the first move
+        possible_moves = []
+        for i in range(N):
+            for j in range(N):
+                for value in range(1, N+1):
+                    if nonTabooMove(i, j, value):
+                        if legalMove(i, j, value, rows):
+                            possible_moves.append(Move(i, j, value))
+        
+        # If board is relatively empty, pick a random possible move:
+        if fraction_filled >=0 and fraction_filled <0.2:
+            print('RANDOM MOVE\n')
             self.propose_move(possible_moves[0])
 
         # If board is partly filled but far from totally filled, use best Last Possible Number move:
 
-        if fraction_filled >=0.2 and fraction_filled <0.4:
+        if fraction_filled >=0.2 and fraction_filled <0.5:
             print('LAST POSSIBLE NUMBER HEURISTIC\n')
 
             # Define the rows, columns and sections of the current board
@@ -99,16 +109,11 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
             rows = []
             N = game_state.board.N
-            # print('N=', N)
             for i in range(N):
                 rows.append(board_str[i*N : (i+1)*N])
             columns = list(np.transpose(rows))
-
             sections = np.vstack([xi for xi in rows])
 
-            # print(rows)
-            # print(columns)
-            # print(sections)
 
             def scoreFunction(move, game_state):
                 """Calculates a score for a given move.
@@ -274,7 +279,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
 
         # # If board is over x% filled, use Minimax with depth=2:
-        if fraction_filled >= 0.4:
+        if fraction_filled >= 0.8:
             print('MINIMAX DEPTH=2\n')
 
             def compute_possible_moves(game_state):
@@ -439,3 +444,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     best_score = score
                     self.propose_move(move[0])
             print('\nBest new score:', best_score)
+
+
+# # Pick the first possible move to ensure a move under 0.1s
+        # first_move = first_possible_move(game_state)
+        # self.propose_move(first_move)
