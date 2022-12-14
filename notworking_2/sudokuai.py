@@ -26,41 +26,40 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         # Quantify stage of the game and based on that pick a move selection tactic
 
         N = game_state.board.N
-
-        def possible(i, j, value):
-            return game_state.board.get(i, j) == SudokuBoard.empty \
-                and not TabooMove(i, j, value) in game_state.taboo_moves
-
-        all_moves = [Move(i, j, value) for i in range(N) for j in range(N)
-                    for value in range(1, N+1) if possible(i, j, value)]
-        move = all_moves[0]
-        self.propose_move(move)
-
         N_empty_squares = game_state.board.squares.count(0)
         N_total_squares = N*N
         fraction_filled = 1 - N_empty_squares/N_total_squares
         print('Filled:', fraction_filled, '\n')
-
-
-        ##############################
 
         # Determine if a certain move is non-taboo in a certain gamestate
         def non_taboo(i, j, value):
             return game_state.board.get(i, j) == SudokuBoard.empty \
                 and not Move(i, j, value) in game_state.taboo_moves
 
-        def legal(i,j,value,rows):
-            root_row = np.sqrt(len(rows))
-            size_row = int(root_row // 1)
-            root_col = np.sqrt(len(rows))
-            size_col = int(-1 * root_col // 1 * -1)
-            prep_row = move.i/size_row
-            prep_col = move.j/size_col
-            row = int(prep_row // 1)
-            col = int(prep_col // 1)
-            y= np.vstack([xi for xi in rows])
-            return not value in np.array(y[row*size_row:row*size_row+size_row,col*size_col \
-                :col*size_col+size_col]).reshape(-1,).tolist() and not value in rows[i] and not value in columns[j]
+        board_str = game_state.board.squares
+        rows = []
+        for i in range(N):
+            rows.append(board_str[i*N : (i+1)*N])
+        columns = np.transpose(rows)
+
+        def legal(i, j, value, data):
+                size_row = math.floor(np.sqrt(len(data)))
+                size_col = math.ceil(np.sqrt(len(data)))
+                row = math.floor(i/size_row)
+                col = math.floor(j/size_col)
+                y= np.vstack([xi for xi in data])
+                return not value in np.array(y[row*size_row:row*size_row+size_row,col*size_col \
+                    :col*size_col+size_col]).reshape(-1,).tolist() and not value in rows[i] and not value in columns[j]
+        
+
+        possible_moves = []
+        for i in range(N):
+            for j in range(N):
+                for value in range(1, N+1):
+                    if non_taboo(i, j, value):
+                        if legal(i, j, value, rows):
+                            possible_moves.append(Move(i, j, value))
+
 
         def scoreFunction(move, game_state):
             """Calculates a score for a given move.
