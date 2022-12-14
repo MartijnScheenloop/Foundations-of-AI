@@ -44,7 +44,7 @@ Some examples of running the script are:
   simulate_game.py
   (this will play a game between two random players on a board with 2x2 regions)
 
-  simulate_game.py --first=random_player --second=greedy_player --board=boards/empty-3x3.txt --time=1.0
+  simulate_game.py --first=Single_possibility_heuristic --second=greedy_player --board=boards/easy-2x2.txt --time=1.0
   (play a game between a random and a greedy player,
    starting on an empty board with 3x3 regions, and with 1 second per move)
 
