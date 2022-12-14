@@ -21,9 +21,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
     def compute_best_move(self, game_state: GameState) -> None:
 
-        # # Pick the first possible move to ensure a move under 0.1s
-        # first_move = first_possible_move(game_state)
-        # self.propose_move(first_move)
+        # HEURISTIC 1; move based one fraction board filled
 
         # Quantify stage of the game and based on that pick a move selection tactic
 
@@ -46,39 +44,109 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
         ##############################
 
+        # Determine if a certain move is non-taboo in a certain gamestate
+        def non_taboo(i, j, value):
+            return game_state.board.get(i, j) == SudokuBoard.empty \
+                and not Move(i, j, value) in game_state.taboo_moves
 
-        # If board is relatively empty, pick a random possible move:
+        def legal(i,j,value,rows):
+            root_row = np.sqrt(len(rows))
+            size_row = int(root_row // 1)
+            root_col = np.sqrt(len(rows))
+            size_col = int(-1 * root_col // 1 * -1)
+            prep_row = move.i/size_row
+            prep_col = move.j/size_col
+            row = int(prep_row // 1)
+            col = int(prep_col // 1)
+            y= np.vstack([xi for xi in rows])
+            return not value in np.array(y[row*size_row:row*size_row+size_row,col*size_col \
+                :col*size_col+size_col]).reshape(-1,).tolist() and not value in rows[i] and not value in columns[j]
 
-        if fraction_filled >=0 and fraction_filled <0.2:
-            print('RANDOM MOVE\n')
-
-            # Determine if a certain move is non-taboo in a certain gamestate
-            def non_taboo(i, j, value):
-                return game_state.board.get(i, j) == SudokuBoard.empty \
-                    and not Move(i, j, value) in game_state.taboo_moves
-        
-            # Create a list of the gamestate board's rows and a list of its columns (used in legal function)
-            board_str = game_state.board.squares
-            rows = []
-
-            for i in range(N):
-                rows.append(board_str[i*N : (i+1)*N])
-            
+        def scoreFunction(move, game_state):
+            """Calculates a score for a given move.
+            """
+            # Make copies of the board's rows, columns and sections
             columns = np.transpose(rows)
+            current_rows = deepcopy(rows)
+            current_columns = deepcopy(columns)
 
-            # Determine if action is legal (not already present in section, row or column)
-            def legal(i,j,value,data):
-                size_row = math.floor(np.sqrt(len(data)))
-                size_col = math.ceil(np.sqrt(len(data)))
-                row = math.floor(i/size_row)
-                col = math.floor(j/size_col)
-                y= np.vstack([xi for xi in data])
-                return not value in np.array(y[row*size_row:row*size_row+size_row,col*size_col \
-                    :col*size_col+size_col]).reshape(-1,).tolist() and not value in rows[i] and not value in columns[j]
-    
-            # Generate a list of all possible moves (legal AND non-taboo)
+            # Check if current rows and columns are already completed
+            current_row_complete = not 0 in current_rows[move.i]
+            current_column_complete = not 0 in current_columns[move.j]
+
+            # Fill in the move and define the new rows and columns
+            new_rows = deepcopy(current_rows)
+            new_rows[move.i][move.j] = move.value
+            new_columns = np.transpose(new_rows)
+
+            # Check if the new rows and columns are completed
+            new_row_complete = not 0 in new_rows[move.i]
+            new_column_complete = not 0 in new_columns[move.j]
+
+            # Check if a row and/or column has been completed by the current move
+            count = 0
+            if new_row_complete and not current_row_complete:
+                count += 1
+            if new_column_complete and not current_column_complete: 
+                count += 1
+
+            # Define the move's sections
+            root_row = np.sqrt(len(current_rows))
+            root_col = np.sqrt(len(current_rows))
+            size_row = int(root_row // 1)
+            size_col = int(-1 * root_col // 1 * -1)
+            prep_row = move.i/size_row
+            prep_col = move.j/size_col
+            row = int(prep_row // 1)
+            col = int(prep_col // 1)
+            y= np.vstack([xi for xi in current_rows])           
+            current_section = np.array(y[row*size_row:row*size_row+size_row,col*size_col:col*size_col+size_col]).reshape(-1,).tolist()
+                
+            # Check if the move completes a section
+            if current_section.count(0) == 1:
+                count += 1
+                
+            # Appoint a score to the move and return an integer
+            score = 0
+            if count == 0:
+                score = 0
+            elif count == 1:
+                score = 1
+            elif count == 2:
+                score = 3
+            elif count == 3:
+                score = 7
+
+            return int(score)
+
+        def not_possible(i, j):
+            """For a given square check what numbers can not be filled in.
+            """
+            # Define the row and column of the square
+            row_i = set(rows[i])
+            col_j = set(columns[j])
+
+            # Define the section of the square
+            root_row = np.sqrt(len(rows))
+            size_row = int(root_row // 1)
+            root_col = np.sqrt(len(rows))
+            size_col = int(-1 * root_col // 1 * -1)
+            prep_row = i/size_row
+            row = int(prep_row // 1)
+            prep_col = j/size_col
+            col = int(prep_col // 1)
+
+            section = set(np.array(sections[row*size_row:row*size_row+size_row,col*size_col:col*size_col+size_col]).reshape(-1,).tolist())
+
+            # Define the total set of numbers that are not possible and return it
+            total_set = row_i.union(col_j)
+            total_set = total_set.union(section)
+            total_set.remove(0)
+
+            return total_set
+
+        def compute_possible_moves(game_state):
             possible_moves = []
-
             for i in range(N):
                 for j in range(N):
                     for value in range(1, N+1):
@@ -86,13 +154,41 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                             if legal(i, j, value, rows):
                                 possible_moves.append(Move(i, j, value))
 
+            # Create copies of the current board's rows and columns, for use in the for loop below
+            current_rows = deepcopy(rows)
+            current_columns = deepcopy(columns)
+
+            possible_moves_scores = []
+
+            # Select the move that leads to the maximal score
+            for move in possible_moves:
+                print(possible_moves_scores.append(scoreFunction(move, game_state)))
+                possible_moves_scores.append(scoreFunction(move, game_state))
+
+            return [possible_moves, possible_moves_scores]
+
+        
+        board_str = game_state.board.squares
+        rows = []
+        N = game_state.board.N
+        for i in range(N):
+            rows.append(board_str[i*N : (i+1)*N])
+        columns = np.transpose(rows)
+            
+        #1 If board is relatively empty, pick a random possible move:
+        if fraction_filled >=0 and fraction_filled <0.2:
+            possible_moves = []
+            for i in range(N):
+                for j in range(N):
+                    for value in range(1, N+1):
+                        if non_taboo(i, j, value):
+                            if legal(i, j, value, rows):
+                                possible_moves.append(Move(i, j, value))
             self.propose_move(possible_moves[0])
 
-        # If board is partly filled but far from totally filled, use best Last Possible Number move:
-
+        #2 If board is partly filled but far from totally filled, use best Last Possible Number move:
         if fraction_filled >=0.2 and fraction_filled <0.4:
             print('LAST POSSIBLE NUMBER HEURISTIC\n')
-
             # Define the rows, columns and sections of the current board
             board = game_state.board
             board_str = board.squares
@@ -106,101 +202,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
             sections = np.vstack([xi for xi in rows])
 
-            # print(rows)
-            # print(columns)
-            # print(sections)
-
-            def scoreFunction(move, game_state):
-                """Calculates a score for a given move.
-                """
-
-                # Make copies of the board's rows, columns and sections
-                columns = np.transpose(rows)
-                current_rows = deepcopy(rows)
-                current_columns = deepcopy(columns)
-
-                # Check if current rows and columns are already completed
-                current_row_complete = not 0 in current_rows[move.i]
-                current_column_complete = not 0 in current_columns[move.j]
-
-                # Fill in the move and define the new rows and columns
-                new_rows = deepcopy(current_rows)
-                new_rows[move.i][move.j] = move.value
-                new_columns = np.transpose(new_rows)
-
-                # Check if the new rows and columns are completed
-                new_row_complete = not 0 in new_rows[move.i]
-                new_column_complete = not 0 in new_columns[move.j]
-                
-                # Check if a row and/or column has been completed by the current move
-                count = 0
-                if new_row_complete and not current_row_complete:
-                    count += 1
-                if new_column_complete and not current_column_complete: 
-                    count += 1
-
-                # Define the move's sections
-                root_row = np.sqrt(len(current_rows))
-                size_row = int(root_row // 1)
-                root_col = np.sqrt(len(current_rows))
-                size_col = int(-1 * root_col // 1 * -1)
-                prep_row = move.i/size_row
-                row = int(prep_row // 1)
-                prep_col = move.j/size_col
-                col = int(prep_col // 1)
-                y= np.vstack([xi for xi in current_rows])           
-                current_section = np.array(y[row*size_row:row*size_row+size_row,col*size_col:col*size_col+size_col]).reshape(-1,).tolist()
-                
-                # Check if the move completes a section
-                if current_section.count(0) == 1:
-                    count += 1
-                
-                # Appoint a score to the move and return an integer
-                score = 0
-
-                if count == 0:
-                    score = 0
-                elif count == 1:
-                    score = 1
-                elif count == 2:
-                    score = 3
-                elif count == 3:
-                    score = 7
-
-                return int(score)
-
-            def not_possible(i, j):
-                """For a given square check what numbers can not be filled in.
-                """
-
-                # Define the row and column of the square
-                row_i = set(rows[i])
-                col_j = set(columns[j])
-
-                # Define the section of the square
-                root_row = np.sqrt(len(rows))
-                size_row = int(root_row // 1)
-                root_col = np.sqrt(len(rows))
-                size_col = int(-1 * root_col // 1 * -1)
-                prep_row = i/size_row
-                row = int(prep_row // 1)
-                prep_col = j/size_col
-                col = int(prep_col // 1)
-
-                section = set(np.array(sections[row*size_row:row*size_row+size_row,col*size_col:col*size_col+size_col]).reshape(-1,).tolist())
-
-                # Define the total set of numbers that are not possible and return it
-                total_set = row_i.union(col_j)
-                total_set = total_set.union(section)
-                total_set.remove(0)
-
-                return total_set
-
-            # For all empty squares check if there is only a single possible move 
-            # and if so, add it to the list single_possibility_moves
-
             single_possibility_moves = []
-
             for i in range(N):
                 for j in range(N):
                     if game_state.board.get(i, j) == SudokuBoard.empty:
@@ -219,45 +221,13 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                             single_possibility_moves.append((move, score))
                             # print('We got a single possibility! Proposed move:', move)
             
-            # Propose the single possibility move that gets the highest reward
-
+        # Propose the single possibility move that gets the highest reward
             max_score = 0
             best_move = Move(0, 0, 0)
             for move in single_possibility_moves:
                 if move[1] >= max_score:
                     max_score = move[1]
                     best_move = move[0]
-            
-            self.propose_move(best_move)
-
-            # If no single possibility move has been found, propose the first possible move
-
-            def non_taboo(i, j, value):
-                return game_state.board.get(i, j) == SudokuBoard.empty \
-                    and not Move(i, j, value) in game_state.taboo_moves
-            
-            def legal(i,j,value,data):
-                
-                root_row = np.sqrt(len(data))
-                size_row = int(root_row // 1)
-                    
-                root_col = np.sqrt(len(data))
-                size_col = int(-1 * root_col // 1 * -1)
-                
-                prep_row = i/size_row
-                row = int(prep_row // 1)
-
-                prep_col = j/size_col
-                col = int(prep_col // 1)
-
-                # size_row = math.floor(np.sqrt(len(data)))
-                # size_col = math.ceil(np.sqrt(len(data)))
-                # row = math.floor(i/size_row)
-                # col = math.floor(j/size_col)
-
-                y= np.vstack([xi for xi in data])
-                return not value in np.array(y[row*size_row:row*size_row+size_row,col*size_col \
-                    :col*size_col+size_col]).reshape(-1,).tolist() and not value in rows[i] and not value in columns[j]
 
             if best_move.value == 0:
                 print('No single possibility! Picking first possible move')
@@ -268,129 +238,11 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                                 if legal(i, j, value, rows):
                                     move = Move(i, j, value)
                                     self.propose_move(move)
-
-
-        ##############################
-
-
-        # # If board is over x% filled, use Minimax with depth=2:
+            else:
+                self.propose_move(best_move)
+        
         if fraction_filled >= 0.4:
             print('MINIMAX DEPTH=2\n')
-
-            def compute_possible_moves(game_state):
-                # Determine if a certain move is non-taboo in a certain gamestate
-                def non_taboo(i, j, value):
-                    return game_state.board.get(i, j) == SudokuBoard.empty \
-                        and not Move(i, j, value) in game_state.taboo_moves
-
-                # Create a list of the gamestate board's rows and a list of its columns (used in legal function)
-                board_str = game_state.board.squares
-                rows = []
-                N = game_state.board.N
-                for i in range(N):
-                    rows.append(board_str[i*N : (i+1)*N])
-                
-                columns = np.transpose(rows)
-                # Determine if action is legal (not already present in section, row or column)
-                def legal(i,j,value,data):
-                    
-                    root_row = np.sqrt(len(data))
-                    size_row = int(root_row // 1)
-                        
-                    root_col = np.sqrt(len(data))
-                    size_col = int(-1 * root_col // 1 * -1)
-                    
-                    prep_row = i/size_row
-                    row = int(prep_row // 1)
-
-                    prep_col = j/size_col
-                    col = int(prep_col // 1)
-
-                    # size_row = math.floor(np.sqrt(len(data)))
-                    # size_col = math.ceil(np.sqrt(len(data)))
-                    # row = math.floor(i/size_row)
-                    # col = math.floor(j/size_col)
-
-                    y= np.vstack([xi for xi in data])
-                    return not value in np.array(y[row*size_row:row*size_row+size_row,col*size_col \
-                        :col*size_col+size_col]).reshape(-1,).tolist() and not value in rows[i] and not value in columns[j]
-            
-                # Generate a list of all possible moves (legal AND non-taboo)
-                possible_moves = []
-
-                for i in range(N):
-                    for j in range(N):
-                        for value in range(1, N+1):
-                            if non_taboo(i, j, value):
-                                if legal(i, j, value, rows):
-                                    possible_moves.append(Move(i, j, value))
-
-                # Create copies of the current board's rows and columns, for use in the for loop below
-                current_rows = deepcopy(rows)
-                current_columns = deepcopy(columns)
-
-                possible_moves_scores = []
-
-                # Select the move that leads to the maximal score
-                for move in possible_moves:
-
-                    # Check if a row, column, or both are completed by a certain move
-                    # and if so: add 1 to the counter
-                    current_row_complete = not 0 in current_rows[move.i]
-                    current_column_complete = not 0 in current_columns[move.j]
-
-                    new_rows = deepcopy(current_rows)
-                    new_rows[move.i][move.j] = move.value
-                    new_columns = np.transpose(new_rows)
-
-                    new_row_complete = not 0 in new_rows[move.i]
-                    new_column_complete = not 0 in new_columns[move.j]
-                        
-                    count = 0
-                    if new_row_complete and not current_row_complete:
-                        count += 1
-                    if new_column_complete and not current_column_complete: 
-                        count += 1
-
-                    # Check if a section is completed, and if so add 1 to the counter
-                    root_row = np.sqrt(len(current_rows))
-                    size_row = int(root_row // 1)
-                    # size_row_old = math.floor(np.sqrt(len(current_rows)))
-                    # print("size row", size_row, size_row_old)
-
-                    root_col = np.sqrt(len(current_rows))
-                    size_col = int(-1 * root_col // 1 * -1)
-                    # size_col_old = math.ceil(np.sqrt(len(current_rows)))
-                    # print("size col", size_col, size_col_old)
-
-                    prep_row = move.i/size_row
-                    row = int(prep_row // 1)
-                    # row_old = math.floor(move.i/size_row)
-                    # print("size row", row, row_old)
-
-                    prep_col = move.j/size_col
-                    col = int(prep_col // 1)
-                    # col_old = math.floor(move.j/size_col) 
-                    # print("size row", col, col_old)
-
-                    y= np.vstack([xi for xi in current_rows])           
-                    current_section = np.array(y[row*size_row:row*size_row+size_row,col*size_col:col*size_col+size_col]).reshape(-1,).tolist()
-                                
-                    if current_section.count(0) == 1:
-                        count += 1
-
-                    # Create a list containing tuples of moves and their score counts
-                    if count == 0:
-                        possible_moves_scores.append((move, 0))
-                    if count == 1:
-                        possible_moves_scores.append((move, 1))
-                    if count == 2:
-                        possible_moves_scores.append((move, 3))
-                    if count == 3:
-                        possible_moves_scores.append((move, 7))
-
-                return [possible_moves, possible_moves_scores]
-
             current_game_state = deepcopy(game_state)
             possible_moves_scores = compute_possible_moves(current_game_state)
             possible_moves_scores = possible_moves_scores[1]
