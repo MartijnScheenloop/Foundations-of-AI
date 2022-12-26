@@ -153,6 +153,13 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
                 list = [child_board, new_score, move]
                 pairs.append(list)
+
+            if isMaximisingPlayer:
+                pairs.sort(key = lambda a:a[1], reverse = True)
+
+            else:
+                pairs.sort(key = lambda a:a[1])
+            
             return pairs
         
         def minimax(game_state, depth: int, isMaximisingPlayer: bool, score: int, alpha: float, beta: float):
@@ -177,8 +184,10 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                         maxEval = eval
                         end_move = pairs[2]
                     alpha = max(alpha, eval)
+                    #print("eval: ", eval, "alpha: ", alpha, "beta: ", beta)
                     if beta <= alpha:
-                         break
+                        #print("prune")
+                        break
                     score -= pairs[1]
                 print("maxEval: ", maxEval, "end_move: ", end_move, "depth: ", depth)
                 return maxEval, end_move
@@ -192,7 +201,9 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                         minEval = eval
                         end_move = pairs[2]
                     beta = min(beta, eval)
+                    #print("eval: ", eval, "alpha: ", alpha, "beta: ", beta)
                     if beta <= alpha:
+                        #print("prune")
                         break
                     score -= pairs[1]
                 print("minEval: ", minEval, "end_move: ", end_move, "depth: ", depth)
