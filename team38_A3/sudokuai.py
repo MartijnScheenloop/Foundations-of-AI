@@ -174,7 +174,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             if len(extractPossibleMoves(game_state)) == 0 or depth == 0:
                 return score, None
 
-            children = getChildren(game_state, isMaximisingPlayer)
+            children = getChildren(game_state)
             if isMaximisingPlayer:
                 maxEval = float('-inf')
                 for pairs in children:
@@ -206,7 +206,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                         #print("prune")
                         break
                     score -= pairs[1]
-                #print("minEval: ", minEval, "end_move: ", end_move, "depth: ", depth)
+                print("minEval: ", minEval, "end_move: ", end_move, "depth: ", depth)
                 return minEval, end_move
 
         #initially proposing random move 
