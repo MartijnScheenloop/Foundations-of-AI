@@ -33,7 +33,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         N = game_state.board.N
         range_N = range(N)
 
-        if fraction_filled < 0.7:
+        if fraction_filled < 0.2:
         # If board is partly filled but far from totally filled, use best Last Possible Number move:
             print('LAST POSSIBLE NUMBER HEURISTIC\n')
 
